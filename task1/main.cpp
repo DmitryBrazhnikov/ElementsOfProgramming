@@ -7,37 +7,37 @@ using std::cout;
 using std::vector;
 using std::endl;
 
-// @overrading vectors operators 
-std::vector<int> operator + (const std::vector<int> &v1, const int &n){
-    vector<int> result(v1.size());
-    for(int i = 0; i < v1.size(); i++){
-        result[i] = v1[i] + n;
+// @overrading vector operators 
+std::vector<int> operator + (const std::vector<int> &augend, int addend){
+    vector<int> result(augend.size());
+    for(int i = 0; i < augend.size(); i++){
+        result[i] = augend[i] + addend;
     }
     return result;
 }
 
-std::vector<int> operator + (const std::vector<int> &v1, const std::vector<int> &v2){
-    assert(v1.size() == v2.size());
+std::vector<int> operator + (const std::vector<int> &augend, const std::vector<int> &addend){
+    assert(augend.size() == addend.size());
     
-    vector<int> result(v1.size());
-    for(int i = 0; i < v1.size(); i++){
-        result[i] = v1[i] + v2[i];
+    vector<int> result(augend.size());
+    for(int i = 0; i < augend.size(); i++){
+        result[i] = augend[i] + addend[i];
     }
     return result;
 }
 
-std::vector<int> operator % (const std::vector<int> &v1, const int &n){
-    vector<int> result(v1.size());
-    for(int i = 0; i < v1.size(); i++){
-        result[i] = v1[i] % n;
+std::vector<int> operator % (const std::vector<int> &dividend, int divisor){
+    vector<int> result(dividend.size());
+    for(int i = 0; i < dividend.size(); i++){
+        result[i] = dividend[i] % divisor;
     }
     return result;
 }
 
-std::vector<int> pow(const std::vector<int> &v1, const int &n){
-    vector<int> result(v1.size());
-    for(int i = 0; i < v1.size(); i++){
-        result[i] = pow(v1[i], n);
+std::vector<int> pow(const std::vector<int> &base, int exponent = 2){
+    vector<int> result(base.size());
+    for(int i = 0; i < base.size(); i++){
+        result[i] = pow(base[i], exponent);
     }
     return result;
 }
@@ -45,96 +45,117 @@ std::vector<int> pow(const std::vector<int> &v1, const int &n){
 template<class T>
 class CFunctor{
     public:
-        CFunctor(){
-            this->module = 0;
-        }
+        explicit CFunctor(int module = 0) : module(module){ } 
 
-        CFunctor(const int &module){
-            this->module = module;
-        }
-
-        T operator () (T &arg){
-            T result = pow(arg,2);
+        T operator () (const T &arg) const {
+            T result = pow(arg, 2) + arg; 
             if(module != 0){
                 result = result % module;
             }
             return result;
         }
 
-        const int& getMod() const{
+        int getModule() const{
             return module;
         }
+    
+        void setModule(int module){
+            this->module = module;
+        }
+    
     private:
         int module;
 };
+
 
 
 // find size of the orbit cycle or precycle 
 template<class T>
 class PreCycle{
     public:
-        PreCycle(const CFunctor<T> &funcToExec){
-            this->funcToExec = funcToExec;
+        PreCycle(const CFunctor<T> &functor){
+            this->functor = functor;
         }
 
-        int getCycSize(const T &initValue){
-            T value = initValue;
-            for(int i = 0; i <= funcToExec.getMod(); i++){
-                value = funcToExec(value);
+        const T getElemInCycle(const T &initValue) const {
+            T curValue = initValue;
+            for(int i = 0; i <= functor.getModule(); i++){
+                curValue = functor(curValue);
             }
+            return curValue;
+        }
 
-            T lookForNumber = value; 
+        int getCycSize(const T &initValue) const {
+            T requiredElement = getElemInCycle(initValue); 
+            T curValue = requiredElement; 
             bool isCycleFound = false;
             int cycSize = 0;
             while(isCycleFound == false){
-                value = funcToExec(value);
+                curValue = functor(curValue);
                 cycSize++;
                 
-                if(lookForNumber == value){
+                if(requiredElement == curValue){
                     isCycleFound = true;
                 }
+            
             }
             return cycSize;
         }
             
-        int getPreCycSize(const T &initValue){
+        int getPreCycSize(const T &initValue) const {
             int cycSize = getCycSize(initValue);
-            T value = initValue;
-            T result;
             int preCycSize = 0;
-            while(value != result){ 
-                for(int i = 0; i < preCycSize; i++){
-                    value = funcToExec(value);
-                }
-                                    
-                result = value;
-                for(int i = 0; i < cycSize; i++){
-                    result = funcToExec(result);
+            bool isJuncPointFound = false;
+            T startPoint = initValue;
+
+            while(!isJuncPointFound){ 
+                T curPoint = startPoint;
+                T checkPoint = curPoint;
+               
+                for(int posInCycle = 0; (posInCycle < cycSize) && !isJuncPointFound; posInCycle++){
+                    curPoint = functor(curPoint);
+                    if(posInCycle == 0){
+                        startPoint = curPoint;
+                    }
+                    if(curPoint == checkPoint){
+                        isJuncPointFound = true;
+                    }
                 }
                 
-                if(value != result) {
+                if(!isJuncPointFound) {
                     preCycSize++;
                 }
             }
             return preCycSize;
         }
+
     private:
-        CFunctor<T> funcToExec;
+        CFunctor<T> functor;
 };
 
 int main(){
     CFunctor<int> func(5);
-    PreCycle<int> cyc(func);
-    cout << cyc.getPreCycSize(2) << endl;
+    PreCycle<int> firstOrbit(func);
+
+    cout << firstOrbit.getPreCycSize(2) << endl;
     
-    vector<int> v1;
-    v1.push_back(0); 
-    v1.push_back(1); 
-    v1.push_back(4); 
+    func.setModule(113);
+    PreCycle<int> secondOrbit(func);
+    cout << secondOrbit.getPreCycSize(3) << endl;
     
-    CFunctor<vector<int> > funcV(5);
-    PreCycle<vector<int> > cycV(funcV);
-    cout << cycV.getPreCycSize(v1) << endl;
+    
+    vector<int> vect;
+    vect.push_back(30); 
+    vect.push_back(10); 
+    vect.push_back(41); 
+    vect.push_back(46); 
+    vect.push_back(58); 
+    vect.push_back(23); 
+    vect.push_back(19); 
+    
+    CFunctor<vector<int> > vectFunc(7);
+    PreCycle<vector<int> > vectOrbit(vectFunc);
+    cout << vectOrbit.getPreCycSize(vect) << endl;
 
     return 0;
 }
