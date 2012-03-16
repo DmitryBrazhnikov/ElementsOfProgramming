@@ -2,10 +2,13 @@
 #include <math.h>
 #include <vector>
 #include <assert.h>
+#include <map>
 
 using std::cout;
 using std::vector;
 using std::endl;
+using std::make_pair;
+using std::map;
 
 // @overrading vector operators 
 std::vector<int> operator + (const std::vector<int> &augend, int addend){
@@ -44,8 +47,15 @@ std::vector<int> pow(const std::vector<int> &base, int exponent = 2){
 
 template<class T>
 class CFunctor{
+    public: 
+        T virtual operator () (const T& arg)  = 0;
+        T virtual getModule() = 0;
+};        
+
+template<class T>
+class CPow : CFunctor<T>{
     public:
-        explicit CFunctor(int module = 0) : module(module){ } 
+        explicit CPow(int module = 0) : module(module){ } 
 
         T operator () (const T &arg) const {
             T result = pow(arg, 2) + arg; 
@@ -67,15 +77,42 @@ class CFunctor{
         int module;
 };
 
+template<class T>
+class CTester : CFunctor<T>{
+    public: 
+        CTester(int cycSyze, int preCycSize, const T& initValue){
+            T val = initValue;
+            T arg;
+            for(int i = 0; i < preCycSize; i++){
+                arg = val;
+                val++;
+                orbitGraph.insert(make_pair(arg, val));
+            } 
+            pointOfConnect = arg;
+            
+            for(int i = 0; i < preCycSizei-1; i++){
+                arg = val;
+                val++;
+                orbitGraph.insert(make_pair(arg, val));
+            } 
+            orbitGraph.insert(make_pair(val, pointOfConnect));
+        }
+        
+        T operator()(const T& arg){
+            return orbitGraph.find(arg)->second;
+        }
 
+    private:
+        int module;
+        map<T, T> orbitGraph;
 
+};
+        
 // find size of the orbit cycle or precycle 
 template<class T>
 class PreCycle{
     public:
-        PreCycle(const CFunctor<T> &functor){
-            this->functor = functor;
-        }
+        PreCycle(const CFunctor<T> &functor) : functor(functor){ }
 
         const T getElemInCycle(const T &initValue) const {
             T curValue = initValue;
@@ -134,11 +171,16 @@ class PreCycle{
 };
 
 int main(){
-    CFunctor<int> func(5);
+    /*CFunctor<int> func(5);
     PreCycle<int> firstOrbit(func);
 
+
     cout << firstOrbit.getPreCycSize(2) << endl;
-    
+*/
+    CTester<int> genOrbit(4,5,2);
+    PreCycle<int> testing(genOrbit);
+    cout << testing.getPreCycSize(2) << endl;
+  /*  
     func.setModule(113);
     PreCycle<int> secondOrbit(func);
     cout << secondOrbit.getPreCycSize(3) << endl;
@@ -156,7 +198,7 @@ int main(){
     CFunctor<vector<int> > vectFunc(7);
     PreCycle<vector<int> > vectOrbit(vectFunc);
     cout << vectOrbit.getPreCycSize(vect) << endl;
-
+*/
     return 0;
 }
 
