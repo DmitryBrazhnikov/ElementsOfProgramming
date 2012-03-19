@@ -1,3 +1,5 @@
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <math.h>
 #include <vector>
@@ -29,6 +31,13 @@ std::vector<int> operator + (const std::vector<int> &augend, const std::vector<i
     return result;
 }
 
+std::vector<int>& operator ++ (std::vector<int> &augend, int){
+    for(int i = 0; i < augend.size(); i++){
+        augend[i]++;
+    }
+    return augend;
+}
+
 std::vector<int> operator % (const std::vector<int> &dividend, int divisor){
     vector<int> result(dividend.size());
     for(int i = 0; i < dividend.size(); i++){
@@ -47,13 +56,13 @@ std::vector<int> pow(const std::vector<int> &base, int exponent = 2){
 
 template<class T>
 class CFunctor{
-    public: 
-        T virtual operator () (const T& arg)  = 0;
-        T virtual getModule() = 0;
+    public:
+        virtual T operator () (const T& arg) const = 0;
+        virtual int getModule() const = 0;
 };        
 
 template<class T>
-class CPow : CFunctor<T>{
+class CPow : public CFunctor<T> {
     public:
         explicit CPow(int module = 0) : module(module){ } 
 
@@ -78,9 +87,9 @@ class CPow : CFunctor<T>{
 };
 
 template<class T>
-class CTester : CFunctor<T>{
-    public: 
-        CTester(int cycSyze, int preCycSize, const T& initValue){
+class COrbitGenerator : public CFunctor<T>{
+    public:
+        COrbitGenerator(int cycSize, int preCycSize, const T& initValue) : module(preCycSize){
             T val = initValue;
             T arg;
             for(int i = 0; i < preCycSize; i++){
@@ -88,9 +97,9 @@ class CTester : CFunctor<T>{
                 val++;
                 orbitGraph.insert(make_pair(arg, val));
             } 
-            pointOfConnect = arg;
+            T pointOfConnect = val;
             
-            for(int i = 0; i < preCycSizei-1; i++){
+            for(int i = 0; i < cycSize-1; i++){
                 arg = val;
                 val++;
                 orbitGraph.insert(make_pair(arg, val));
@@ -98,8 +107,12 @@ class CTester : CFunctor<T>{
             orbitGraph.insert(make_pair(val, pointOfConnect));
         }
         
-        T operator()(const T& arg){
+        T operator()(const T& arg) const{
             return orbitGraph.find(arg)->second;
+        }
+
+        int getModule() const {
+            return module;
         }
 
     private:
@@ -112,12 +125,15 @@ class CTester : CFunctor<T>{
 template<class T>
 class PreCycle{
     public:
-        PreCycle(const CFunctor<T> &functor) : functor(functor){ }
+        PreCycle(const CFunctor<T> *functor) {
+            this->functor = functor;
+        }
 
         const T getElemInCycle(const T &initValue) const {
             T curValue = initValue;
-            for(int i = 0; i <= functor.getModule(); i++){
-                curValue = functor(curValue);
+            
+            for(int i = 0; i <= functor->getModule(); i++){
+                curValue = (*functor)(curValue);
             }
             return curValue;
         }
@@ -128,7 +144,7 @@ class PreCycle{
             bool isCycleFound = false;
             int cycSize = 0;
             while(isCycleFound == false){
-                curValue = functor(curValue);
+                curValue = (*functor)(curValue);
                 cycSize++;
                 
                 if(requiredElement == curValue){
@@ -150,7 +166,7 @@ class PreCycle{
                 T checkPoint = curPoint;
                
                 for(int posInCycle = 0; (posInCycle < cycSize) && !isJuncPointFound; posInCycle++){
-                    curPoint = functor(curPoint);
+                    curPoint = (*functor)(curPoint);
                     if(posInCycle == 0){
                         startPoint = curPoint;
                     }
@@ -167,38 +183,51 @@ class PreCycle{
         }
 
     private:
-        CFunctor<T> functor;
+        const CFunctor<T> *functor;
 };
 
+void testForInt(){
+    srand(time(NULL));
+    for(int i = 0; i < 5; i++){
+        int cycSize = rand() % 100 + 1;
+        int preCycSize = rand() % 100 + 1;
+        int initElem = rand() % 50 + 1;
+         
+        COrbitGenerator<int> genOrbit(cycSize, preCycSize, initElem);
+        PreCycle<int> testing(&genOrbit);
+       
+        //cout << cycSize << " " << testing.getCycSize(initElem) << "; ";
+        //cout << preCycSize << " " << testing.getPreCycSize(initElem) << endl;
+
+        assert((cycSize == testing.getCycSize(initElem)) && (preCycSize == testing.getPreCycSize(initElem)));
+    }
+}
+
+void testForVector(){
+    srand(time(NULL));
+    for(int i = 0; i < 5; i++){
+        int cycSize = rand() % 100 + 1;
+        int preCycSize = rand() % 100 + 1;
+        
+        int vectSize = rand() % 50 + 1;
+        vector<int> initVect(vectSize);
+        for(int i = 0; i < vectSize; i++){
+            initVect.push_back(rand() % 50+1); 
+        }
+        
+        COrbitGenerator<vector<int> > genOrbit(cycSize, preCycSize, initVect);
+        PreCycle<vector<int> > testing(&genOrbit);
+        
+        //cout << cycSize << " " << testing.getCycSize(initVect) << "; ";
+        //cout << preCycSize << " " << testing.getPreCycSize(initVect) << endl;
+
+        assert((cycSize == testing.getCycSize(initVect)) && (preCycSize == testing.getPreCycSize(initVect)));
+    }
+}
+
 int main(){
-    /*CFunctor<int> func(5);
-    PreCycle<int> firstOrbit(func);
-
-
-    cout << firstOrbit.getPreCycSize(2) << endl;
-*/
-    CTester<int> genOrbit(4,5,2);
-    PreCycle<int> testing(genOrbit);
-    cout << testing.getPreCycSize(2) << endl;
-  /*  
-    func.setModule(113);
-    PreCycle<int> secondOrbit(func);
-    cout << secondOrbit.getPreCycSize(3) << endl;
-    
-    
-    vector<int> vect;
-    vect.push_back(30); 
-    vect.push_back(10); 
-    vect.push_back(41); 
-    vect.push_back(46); 
-    vect.push_back(58); 
-    vect.push_back(23); 
-    vect.push_back(19); 
-    
-    CFunctor<vector<int> > vectFunc(7);
-    PreCycle<vector<int> > vectOrbit(vectFunc);
-    cout << vectOrbit.getPreCycSize(vect) << endl;
-*/
+    testForInt();
+    testForVector();
     return 0;
 }
 
