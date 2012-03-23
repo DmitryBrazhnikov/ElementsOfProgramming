@@ -12,7 +12,7 @@ using std::endl;
 using std::make_pair;
 using std::map;
 
-// @overrading vector operators 
+// @overriding vector operators 
 std::vector<int> operator + (const std::vector<int> &augend, int addend){
     vector<int> result(augend.size());
     for(int i = 0; i < augend.size(); i++){
@@ -31,11 +31,12 @@ std::vector<int> operator + (const std::vector<int> &augend, const std::vector<i
     return result;
 }
 
-std::vector<int>& operator ++ (std::vector<int> &augend, int){
+std::vector<int> operator ++ (std::vector<int> &augend, int){
+    std::vector<int> entry(augend);
     for(int i = 0; i < augend.size(); i++){
         augend[i]++;
     }
-    return augend;
+    return entry;
 }
 
 std::vector<int> operator % (const std::vector<int> &dividend, int divisor){
@@ -125,15 +126,13 @@ class COrbitGenerator : public CFunctor<T>{
 template<class T>
 class PreCycle{
     public:
-        PreCycle(const CFunctor<T> *functor) {
-            this->functor = functor;
-        }
+        PreCycle(const CFunctor<T> &functor_) : functor(functor_) { }
 
         const T getElemInCycle(const T &initValue) const {
             T curValue = initValue;
             
-            for(int i = 0; i <= functor->getModule(); i++){
-                curValue = (*functor)(curValue);
+            for(int i = 0; i <= functor.getModule(); i++){
+                curValue = functor(curValue);
             }
             return curValue;
         }
@@ -144,7 +143,7 @@ class PreCycle{
             bool isCycleFound = false;
             int cycSize = 0;
             while(isCycleFound == false){
-                curValue = (*functor)(curValue);
+                curValue = functor(curValue);
                 cycSize++;
                 
                 if(requiredElement == curValue){
@@ -166,7 +165,7 @@ class PreCycle{
                 T checkPoint = curPoint;
                
                 for(int posInCycle = 0; (posInCycle < cycSize) && !isJuncPointFound; posInCycle++){
-                    curPoint = (*functor)(curPoint);
+                    curPoint = functor(curPoint);
                     if(posInCycle == 0){
                         startPoint = curPoint;
                     }
@@ -183,18 +182,18 @@ class PreCycle{
         }
 
     private:
-        const CFunctor<T> *functor;
+        const CFunctor<T>& functor;
 };
 
 void testForInt(){
-    srand(time(NULL));
-    for(int i = 0; i < 5; i++){
+    srand(1000);
+    for(int i = 0; i < 50; i++){
         int cycSize = rand() % 100 + 1;
         int preCycSize = rand() % 100 + 1;
         int initElem = rand() % 50 + 1;
          
         COrbitGenerator<int> genOrbit(cycSize, preCycSize, initElem);
-        PreCycle<int> testing(&genOrbit);
+        PreCycle<int> testing(genOrbit);
        
         //cout << cycSize << " " << testing.getCycSize(initElem) << "; ";
         //cout << preCycSize << " " << testing.getPreCycSize(initElem) << endl;
@@ -204,8 +203,8 @@ void testForInt(){
 }
 
 void testForVector(){
-    srand(time(NULL));
-    for(int i = 0; i < 5; i++){
+    srand(1000);
+    for(int i = 0; i < 50; i++){
         int cycSize = rand() % 100 + 1;
         int preCycSize = rand() % 100 + 1;
         
@@ -216,7 +215,7 @@ void testForVector(){
         }
         
         COrbitGenerator<vector<int> > genOrbit(cycSize, preCycSize, initVect);
-        PreCycle<vector<int> > testing(&genOrbit);
+        PreCycle<vector<int> > testing(genOrbit);
         
         //cout << cycSize << " " << testing.getCycSize(initVect) << "; ";
         //cout << preCycSize << " " << testing.getPreCycSize(initVect) << endl;
