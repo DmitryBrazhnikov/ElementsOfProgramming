@@ -6,8 +6,6 @@
 
 using namespace std;
 
-//class
-
 template <class Type>
 class CMatrix {
     public:
@@ -23,11 +21,14 @@ class CMatrix {
         void fill();
         void fill_nulls();
        
-		Type trace(); //trace
-		CMatrix<Type> transp(); //Transponition
+        void size(int &rows, int &columns);
+		Type trace(); 
+		CMatrix<Type> transpose(); 
 		CMatrix<Type> minor(int, int);
 		CMatrix<Type> inverse();
 	    static CMatrix<Type> identity(int size);	
+	    CMatrix<Type> getIdentity() const;	
+	    static CMatrix<Type> nullMatrix(int size);	
         Type det();
 
         const vector<Type>& operator [] (int) const; 
@@ -35,32 +36,29 @@ class CMatrix {
         CMatrix<Type>& operator += (const CMatrix<Type>&);
         CMatrix<Type>& operator -= (const CMatrix<Type>&);
         CMatrix<Type>& operator = (CMatrix<Type>);               
-        CMatrix<Type> operator + (const CMatrix<Type>&);       
-        CMatrix<Type> operator - (const CMatrix<Type>&); 
-        CMatrix<Type> operator * (const CMatrix<Type>&);		
+        CMatrix<Type> operator + (const CMatrix<Type>&) const;       
+        CMatrix<Type> operator - (const CMatrix<Type>&) const; 
+        CMatrix<Type> operator * (const CMatrix<Type>&) const;		
+        bool operator == (const CMatrix<Type>&) const;		
 
     private:
-        //Count of strings
-        int m;
-        //Count of columns
-        int n;
-        //Array of elements
+        int rows;
+        int columns;
         vector<vector<Type> > elems;
 };
 
-//methods
 
 template <class Type>
 CMatrix<Type>::CMatrix(){
-	m = 0;
-	n = 0;
+	rows = 0;
+	columns = 0;
 }
 
 template <class Type>
-CMatrix<Type>::CMatrix(int _m, int _n){
-	m = 0;
-	n = 0;
-	this->resize(_m,_n);
+CMatrix<Type>::CMatrix(int _rows, int _columns){
+	rows = 0;
+	columns = 0;
+	this->resize(_rows,_columns);
 }
 
 template <class Type>
@@ -74,26 +72,38 @@ CMatrix<Type> CMatrix<Type>::identity(int size){
 }
 
 template <class Type>
-CMatrix<Type>::CMatrix(const CMatrix<Type> &to_copy){
-	m = 0;
-	n = 0;
-	this->resize(to_copy.m, to_copy.n);
+CMatrix<Type> CMatrix<Type>::getIdentity() const{
+    return CMatrix<Type>::identity(rows);
+}
 
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+template <class Type>
+CMatrix<Type> CMatrix<Type>::nullMatrix(int size){
+    CMatrix<Type> nullMatrix(size, size);
+    nullMatrix.fill_nulls();
+    return nullMatrix;
+}
+
+template <class Type>
+CMatrix<Type>::CMatrix(const CMatrix<Type> &to_copy){
+	rows = 0;
+	columns = 0;
+	this->resize(to_copy.rows, to_copy.columns);
+
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			elems[i][j] = to_copy.elems[i][j];
 		}
 	}
 }
 
 template <class Type>
-CMatrix<Type>& CMatrix<Type>::resize(int _m, int _n){
-	if(m != _m && n != _n){
-		m = _m;
-		n = _n;
-		elems.resize(m);
-		for(int i = 0; i < m; i++){
-			elems[i].resize(n);
+CMatrix<Type>& CMatrix<Type>::resize(int _rows, int _columns){
+	if(rows != _rows && columns != _columns){
+		rows = _rows;
+		columns = _columns;
+		elems.resize(rows);
+		for(int i = 0; i < rows; i++){
+			elems[i].resize(columns);
 		}
 	}
 	return *this;
@@ -104,8 +114,8 @@ CMatrix<Type>::~CMatrix(){}
 
 template <class Type>
 void CMatrix<Type>::print(){ 
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 		cout << elems[i][j] << " ";
 		}
 		cout << endl;
@@ -114,9 +124,9 @@ void CMatrix<Type>::print(){
 
 template <class Type>
 void CMatrix<Type>::fill(){
-	cout << "input an arbitrary matrix " << m << "x" << n << endl;
-    for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	cout << "input an arbitrary matrix " << rows << "x" << columns << endl;
+    for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			cin >> elems[i][j];
 		}
 	}
@@ -124,8 +134,8 @@ void CMatrix<Type>::fill(){
 
 template <class Type>
 void CMatrix<Type>::fill_nulls(){
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			elems[i][j] = 0;
 		}
 	}
@@ -133,9 +143,9 @@ void CMatrix<Type>::fill_nulls(){
 
 template <class Type>
 Type CMatrix<Type>::trace(){
-	assert(m == n);
+	assert(rows == columns);
 	Type sum = 0;
-	for(int i = 0; i < m; i++){
+	for(int i = 0; i < rows; i++){
 		sum += elems[i][i];
 	}
 	return sum;
@@ -143,22 +153,22 @@ Type CMatrix<Type>::trace(){
 
 template <class Type>
 const vector<Type>& CMatrix<Type>::operator [] (int i) const{
-	assert(i >= 0 && i < m);
+	assert(i >= 0 && i < rows);
 	return elems[i];
 }
 
 
 template <class Type>
 vector<Type>& CMatrix<Type>::operator [] (int i){
-	assert(i >= 0 && i < m);
+	assert(i >= 0 && i < rows);
 	return elems[i];
 }
 
 template <class Type>
 CMatrix<Type>& CMatrix<Type>::operator += (const CMatrix<Type> &matrix2){
-	assert(m == matrix2.m && n == matrix2.n);
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	assert(rows == matrix2.rows && columns == matrix2.columns);
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			elems[i][j] += matrix2.elems[i][j];
 		}
 	}
@@ -167,9 +177,9 @@ CMatrix<Type>& CMatrix<Type>::operator += (const CMatrix<Type> &matrix2){
 
 template <class Type>
 CMatrix<Type>& CMatrix<Type>::operator -= (const CMatrix<Type> &matrix2){
-	assert(m == matrix2.m && n == matrix2.n);
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	assert(rows == matrix2.rows && columns == matrix2.columns);
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			elems[i][j] -= matrix2.elems[i][j];
 		}
 	}
@@ -178,18 +188,18 @@ CMatrix<Type>& CMatrix<Type>::operator -= (const CMatrix<Type> &matrix2){
 
 template <class Type>
 CMatrix<Type>& CMatrix<Type>::operator = (const CMatrix<Type> matrix2){
-	if(m != 0 && n != 0){
-		for(int i = 0; i < m; i++){
+	if(rows != 0 && columns != 0){
+		for(int i = 0; i < rows; i++){
 			elems[i].clear();
 		}
 		elems.clear();
-		m = 0;
-		n = 0;
+		rows = 0;
+		columns = 0;
 	}
 
-	this->resize(matrix2.m, matrix2.n);
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	this->resize(matrix2.rows, matrix2.columns);
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			elems[i][j] = matrix2.elems[i][j];
 		}
 	}
@@ -197,29 +207,29 @@ CMatrix<Type>& CMatrix<Type>::operator = (const CMatrix<Type> matrix2){
 } 
 
 template <class Type>
-CMatrix<Type> CMatrix<Type>::operator + (const CMatrix<Type>& matrix2){
-	assert(n == matrix2.n && m == matrix2.m);
+CMatrix<Type> CMatrix<Type>::operator + (const CMatrix<Type>& matrix2) const{
+	assert(columns == matrix2.columns && rows == matrix2.rows);
 	CMatrix<Type> result (*this);
 	result += matrix2;
 	return result;
 }
 
 template <class Type>
-CMatrix<Type> CMatrix<Type>::operator - (const CMatrix<Type>& matrix2){
-	assert(n == matrix2.n && m == matrix2.m);
+CMatrix<Type> CMatrix<Type>::operator - (const CMatrix<Type>& matrix2) const {
+	assert(columns == matrix2.columns && rows == matrix2.rows);
 	CMatrix<Type> result (*this);
 	result -= matrix2;
 	return result;
 }
 
 template <class Type>
-CMatrix<Type> CMatrix<Type>::operator * (const CMatrix<Type>& matrix2){
-	assert(n == matrix2.m);
-	CMatrix<Type> result (m, matrix2.n);
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < matrix2.n; j++){
+CMatrix<Type> CMatrix<Type>::operator * (const CMatrix<Type>& matrix2) const{
+	assert(columns == matrix2.rows);
+	CMatrix<Type> result (rows, matrix2.columns);
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < matrix2.columns; j++){
 			int sum = 0;
-			for(int k = 0; k < n; k++){
+			for(int k = 0; k < columns; k++){
 				sum += elems[i][k] * matrix2.elems[k][j];
 			}
 			result[i][j] = sum;
@@ -229,11 +239,25 @@ CMatrix<Type> CMatrix<Type>::operator * (const CMatrix<Type>& matrix2){
 	return result;
 }
 
+
 template <class Type>
-CMatrix<Type> CMatrix<Type>::transp(){
-	CMatrix<Type> tmatrix(n, m);
-	for(int i = 0; i < n; i++){
-		for(int j = 0; j < m; j++){
+bool CMatrix<Type>::operator == (const CMatrix<Type> &comparableMatrix) const{
+	assert((columns == comparableMatrix.columns) && (rows == comparableMatrix.rows));
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
+            if((*this)[i][j] != comparableMatrix[i][j]){
+                return false;
+            }
+		}          
+	}
+	return true;
+}
+
+template <class Type>
+CMatrix<Type> CMatrix<Type>::transpose(){
+	CMatrix<Type> tmatrix(columns, rows);
+	for(int i = 0; i < columns; i++){
+		for(int j = 0; j < rows; j++){
 			tmatrix.elems[i][j] = elems[j][i];
 		}
 	}
@@ -243,14 +267,14 @@ CMatrix<Type> CMatrix<Type>::transp(){
 
 template <class Type>
 CMatrix<Type> CMatrix<Type>::minor(int _i, int _j){
-	assert(m == n);
-	CMatrix<Type> new_matrix(n-1, m-1);
+	assert(rows == columns);
+	CMatrix<Type> new_matrix(columns-1, rows-1);
 	int cur_i = 0;
 	int cur_j = 0;
 
-	for(int i = 0; i < m; i++){
+	for(int i = 0; i < rows; i++){
 		if(i == _i) continue;
-		for(int j = 0; j < n; j++){
+		for(int j = 0; j < columns; j++){
 			if(j == _j) continue;
 			new_matrix.elems[cur_i][cur_j] = elems[i][j];
 			cur_j++;
@@ -263,14 +287,14 @@ CMatrix<Type> CMatrix<Type>::minor(int _i, int _j){
 
 template <class Type>
 Type CMatrix<Type>::det(){
-	assert(m == n);
-	if(m == 1){
+	assert(rows == columns);
+	if(rows == 1){
 		return elems[0][0];
 	}
 
 	Type number = 0;
 	
-	for(int i = 0; i < n; i++){
+	for(int i = 0; i < columns; i++){
 		CMatrix<Type> tmatrix;
 		tmatrix = this->minor(0,i);
 		if(i % 2 == 0){
@@ -285,14 +309,14 @@ Type CMatrix<Type>::det(){
 
 template <class Type>
 CMatrix<Type> CMatrix<Type>::inverse(){
-	assert(m == n);
+	assert(rows == columns);
 	Type det = this->det();
 	assert(det != 0);
 
-	CMatrix<Type> inmatrix (m,n);
+	CMatrix<Type> inmatrix (rows,columns);
 	char mult;
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++){
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < columns; j++){
 			((i + j) % 2 == 0)? mult = 1 : mult = -1; 
 			inmatrix.elems[i][j] = mult*(this->minor(j,i)).det()/det;
 		}
