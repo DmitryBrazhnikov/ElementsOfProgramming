@@ -1,92 +1,51 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
+#include "fraction.h"
+#include "polynom.h"
+#include "gcd.h"
+#include <cstdlib>
 
-using std::vector;
 using std::cout;
 using std::endl;
-using std::min;
-using std::max;
-using std::swap;
 
-class Polynom {
-    public:
-        Polynom(int degree);
-        Polynom(const vector<int> &polynom);
-        
-        int degree() const;
-        int leaderCoefficient() const;
-        void print() const;
-        
-        int& operator [] (int index);
-
-    private:
-        vector<int> coefficients;
-};
-
-Polynom::Polynom(int degree) : coefficients(degree + 1, 1) { }
-Polynom::Polynom(const vector<int> &polynom) : coefficients(polynom) { }
-
-int Polynom::degree() const {
-    return coefficients.size();
-}
-
-int Polynom::leaderCoefficient() const {
-    return coefficients[degree()];
-}
-
-int& Polynom::operator [] (int index) {
-    return coefficients[index];
-}
-
-void Polynom::print() const {
-    for(int i = 0; i < degree(); i++){
-        cout << coefficients[i] << "x^" << i;
-        if(i < degree() - 1){
-            cout << " + ";
-        }
+void testInt() { 
+    srand(1000);
+    for(int i = 0; i < 500; i++){
+        int lhs = rand() % 1000 + 1;  
+        int rhs = rand() % 1000 + 1; 
+        int greatCommonDivisor = gcd(lhs,rhs);
+        cout << "(" << lhs << "," << rhs << ") = " << greatCommonDivisor << endl;
     }
-    cout << endl;
 }
 
-template<class T>
-class GCD {
-    public:
-        T operator () (T lhs, T rhs) const {
-            T dividend = max(lhs, rhs);
-            T divisor = min(lhs, rhs);
-
-            while(divisor != 0){
-                dividend = dividend % divisor;
-                swap(dividend, divisor);
-            }
-
-            return dividend;
+void testPolynom() {
+    srand(1000);
+    for(int i = 0; i < 100; i++){
+        int lhsDegree = rand() % 4 + 1;
+        int rhsDegree = rand() % 2 + 1;
+        
+        Polynom lhs(lhsDegree);
+        for(int i = 0; i <= lhsDegree; i++){
+            lhs[i] = rand() % 4 + 1;
         }
-}; 
+
+        Polynom rhs(rhsDegree);
+        for(int i = 0; i <= rhsDegree; i++){
+            rhs[i] = rand() % 2 + 1;
+        }
+
+        lhs.print();
+        rhs.print();
+
+        Polynom greatCommonDivisor = gcd(lhs,rhs);
+        cout << "gcd: "; 
+        greatCommonDivisor.print();
+    }
+}
 
 int main() {
-    Polynom p1(3);
-    p1[0] = -42;
-    p1[1] = 0;
-    p1[2] = -12;
-    p1[3] = 1;
-    p1.print();
-    
-    Polynom p2(1);
-    p2[0] = -3;
-    p2[1] = 1;
-    p2.print();
-   
-    GCD<int> gcd;
-    cout << gcd(7,12);
-     
-    
+    testInt();
+    testPolynom();
     return 0;
 }
-
-
-
-
-
 
