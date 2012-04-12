@@ -56,16 +56,16 @@ std::vector<int> pow(const std::vector<int> &base, int exponent = 2){
 }
 
 template<class T>
-class CFunctor{
+class Transformation{
     public:
         virtual T operator () (const T& arg) const = 0;
         virtual int getModule() const = 0;
 };        
 
 template<class T>
-class CPow : public CFunctor<T> {
+class Pow : public Transformation<T> {
     public:
-        explicit CPow(int module = 0) : module(module){ } 
+        explicit Pow(int module = 0) : module(module){ } 
 
         T operator () (const T &arg) const {
             T result = pow(arg, 2) + arg; 
@@ -87,10 +87,11 @@ class CPow : public CFunctor<T> {
         int module;
 };
 
+
 template<class T>
-class COrbitGenerator : public CFunctor<T>{
+class OrbitGenerator : public Transformation<T>{
     public:
-        COrbitGenerator(int cycSize, int preCycSize, const T& initValue) : module(preCycSize){
+        OrbitGenerator(int cycSize, int preCycSize, const T& initValue) : module(preCycSize){
             T val = initValue;
             T arg;
             for(int i = 0; i < preCycSize; i++){
@@ -126,13 +127,13 @@ class COrbitGenerator : public CFunctor<T>{
 template<class T>
 class PreCycle{
     public:
-        PreCycle(const CFunctor<T> &functor_) : functor(functor_) { }
+        PreCycle(const Transformation<T> &transformation_) : transformation(transformation_) { }
 
         const T getElemInCycle(const T &initValue) const {
             T curValue = initValue;
             
-            for(int i = 0; i <= functor.getModule(); i++){
-                curValue = functor(curValue);
+            for(int i = 0; i <= transformation.getModule(); i++){
+                curValue = transformation(curValue);
             }
             return curValue;
         }
@@ -143,7 +144,7 @@ class PreCycle{
             bool isCycleFound = false;
             int cycSize = 0;
             while(isCycleFound == false){
-                curValue = functor(curValue);
+                curValue = transformation(curValue);
                 cycSize++;
                 
                 if(requiredElement == curValue){
@@ -165,7 +166,7 @@ class PreCycle{
                 T checkPoint = curPoint;
                
                 for(int posInCycle = 0; (posInCycle < cycSize) && !isJuncPointFound; posInCycle++){
-                    curPoint = functor(curPoint);
+                    curPoint = transformation(curPoint);
                     if(posInCycle == 0){
                         startPoint = curPoint;
                     }
@@ -182,7 +183,7 @@ class PreCycle{
         }
 
     private:
-        const CFunctor<T>& functor;
+        const Transformation<T>& transformation;
 };
 
 void testForInt(){
@@ -192,7 +193,7 @@ void testForInt(){
         int preCycSize = rand() % 100 + 1;
         int initElem = rand() % 50 + 1;
          
-        COrbitGenerator<int> genOrbit(cycSize, preCycSize, initElem);
+        OrbitGenerator<int> genOrbit(cycSize, preCycSize, initElem);
         PreCycle<int> testing(genOrbit);
        
         //cout << cycSize << " " << testing.getCycSize(initElem) << "; ";
@@ -214,7 +215,7 @@ void testForVector(){
             initVect.push_back(rand() % 50+1); 
         }
         
-        COrbitGenerator<vector<int> > genOrbit(cycSize, preCycSize, initVect);
+        OrbitGenerator<vector<int> > genOrbit(cycSize, preCycSize, initVect);
         PreCycle<vector<int> > testing(genOrbit);
         
         //cout << cycSize << " " << testing.getCycSize(initVect) << "; ";
