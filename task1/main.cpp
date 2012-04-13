@@ -12,8 +12,7 @@ using std::endl;
 using std::make_pair;
 using std::map;
 
-// @overriding vector operators 
-std::vector<int> operator + (const std::vector<int> &augend, int addend){
+std::vector<int> addScalar (const std::vector<int> &augend, int addend){
     vector<int> result(augend.size());
     for(int i = 0; i < augend.size(); i++){
         result[i] = augend[i] + addend;
@@ -29,14 +28,6 @@ std::vector<int> operator + (const std::vector<int> &augend, const std::vector<i
         result[i] = augend[i] + addend[i];
     }
     return result;
-}
-
-std::vector<int> operator ++ (std::vector<int> &augend, int){
-    std::vector<int> entry(augend);
-    for(int i = 0; i < augend.size(); i++){
-        augend[i]++;
-    }
-    return entry;
 }
 
 std::vector<int> operator % (const std::vector<int> &dividend, int divisor){
@@ -87,6 +78,16 @@ class Pow : public Transformation<T> {
         int module;
 };
 
+class Increment {
+    public:
+        int operator () (int &element){
+            element++;
+        }
+        
+        vector<int>& operator () (vector<int> &element){
+            element = addScalar(element, 1);
+        }
+};
 
 template<class T>
 class OrbitGenerator : public Transformation<T>{
@@ -94,16 +95,17 @@ class OrbitGenerator : public Transformation<T>{
         OrbitGenerator(int cycSize, int preCycSize, const T& initValue) : module(preCycSize){
             T val = initValue;
             T arg;
+            Increment inc;
             for(int i = 0; i < preCycSize; i++){
                 arg = val;
-                val++;
+                inc(val);
                 orbitGraph.insert(make_pair(arg, val));
             } 
             T pointOfConnect = val;
             
             for(int i = 0; i < cycSize-1; i++){
                 arg = val;
-                val++;
+                inc(val);
                 orbitGraph.insert(make_pair(arg, val));
             } 
             orbitGraph.insert(make_pair(val, pointOfConnect));
