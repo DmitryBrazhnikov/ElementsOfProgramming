@@ -6,6 +6,7 @@
 #include <stack>
 #include <set>
 #include <limits>
+#include <algorithm>
 
 using std::cout;
 using std::cin;
@@ -13,63 +14,163 @@ using std::endl;
 using std::set;
 using std::queue;
 using std::vector;
-using std::list;
 using std::stack;
 using std::map;
 using std::numeric_limits;
 using std::priority_queue;
 using std::pair;
 using std::make_pair;
+using std::find;
+
 
 template<class T>
-class CGraph{
-    public:
-        //add an edge   
-        CGraph<T>& addEdge(const T &vertex1, const T &vertex2);
-        //add a bidirectinal edge   
-        CGraph<T>& addDoubleEdge(const T &vertex1, const T &vertex2);
-        //remove edge from graph
-        CGraph<T>& rmEdge(const T &vertex1, const T &vertex2);
-        //get number of vertexes
-        const int getVertexCount();
-        //get an array of vertexes
-        const set<T> getVertexes();
-        //print the graph
-        void printGraph();
-       
-        //Algorithms 
-        
-        //breadth-first traversal
-        list<T> goBreadth(const T &headVertex);
-        //depth-first search in the entire graph
-        list<T> goDepth(const T &headVertex);
-        //depth-first search inside one connected component
-        list<T> goDepthComponent(const T&headVertex);
-        //print the traversal
-        static void printWay(list<T> way);
-        
-        typedef DfsIterator iterator; 
-
+class Tree{
     private:
         class DfsIterator {
             public:
-                operator ++ () { 
-            private:
+                DfsIterator(){
+                    tree = 0;
+                    curVertex = 0;
+                }
                 
-                 
-        //directed weighted graph
-        map<T, vector<T> > graph;
-        //auxilary function for depth-first traversal
-        list<T>& visit(T &curVertex, stack<T> &lifo, map<T, int> &colors, list<T> &result);
+                DfsIterator(Tree<T>* tree_, T* curVertex_) : tree(tree_) {
+                    curVertex = curVertex_;
+                }
+
+                DfsIterator& operator = (const DfsIterator& it){
+                    this->tree = it.tree;
+                    this->curVertex = it.curVertex;
+                }
+                
+                bool operator == (const DfsIterator& it){
+                    if(tree == it.tree && curVertex == it.curVertex){
+                        return true;
+                    }
+                    return false;
+                }
+                
+                bool operator != (const DfsIterator& it){
+                    if(!(*this == it)){
+                        return true;
+                    }
+                    return false;
+                }
+        
+                DfsIterator operator ++ (int) {
+                    DfsIterator result = *this;
+                    curVertex = (tree->nextVertex(*curVertex, *curVertex));
+                    return result;
+                }
+                
+                T& operator * () {
+                    return *curVertex;
+                }
+            private:
+                Tree<T>* tree; 
+                T* curVertex;
+        };
+    
+    public:
+        typedef DfsIterator iterator;
+        
+        Tree(const T& root_) : root(root_) { }; 
+        
+        //add an edge   
+        Tree<T>& addEdge(const T &vertex1, const T &vertex2);
+        //get number of vertexes
+        set<T> getVertexes();
+        int getTreeOrder();
+        //print the tree
+        void printTree();
+       
+        //Algorithms 
+        T* nextVertex(const T& vertex, const T& prev); 
+        //breadth-first traversal
+        vector<T> goBreadth(const T &headVertex);
+        //print the traversal
+        static void printPath(const vector<T> &path);
+        void printParents();
+
+        DfsIterator begin();
+        DfsIterator end();
+        
+    private:
+        //directed weighted tree
+        map<T, vector<T> > tree;
+        T root;
+        int order;
+        
+        map<T, T> parents;
 };
+
+
+template<class T>
+typename Tree<T>::DfsIterator Tree<T>::begin(){
+    DfsIterator it(this, &root);
+    return it;
+}
+
+template<class T>
+typename Tree<T>::DfsIterator Tree<T>::end(){
+    DfsIterator endit(this, 0);
+    return endit;
+}
+
+template<class T>
+T* Tree<T>::nextVertex(const T& vertex, const T& prev){
+    T* next = 0;
+    if(vertex == 0){
+        return 0;
+    }
+    if(tree.count(vertex) > 0 && !(tree[vertex].size() == 1 && tree[vertex][0] == prev)){
+        if(prev != 0){
+        typename vector<T>::iterator childIterator = find(tree[vertex].begin(), tree[vertex].end(), prev);
+            if(childIterator == tree[vertex].end()){
+                next = &(tree[vertex][0]);
+            }
+            else{
+                if(childIterator+1 != tree[vertex].end()){
+                    next = &(*(childIterator+1));
+                }
+                else {
+                    next = 0;
+                }
+            }
+        }
+        else{
+            next = &(tree[vertex][0]);
+        }
+    } 
+    else {
+        T parent = parents[vertex];
+        vector<T> children = tree[parent];
+        typename vector<T>::iterator childIterator = find(children.begin(), children.end(), vertex);
+        if(childIterator + 1 == children.end()){
+            next = nextVertex(parents[parents[*childIterator]],parents[*childIterator]);
+        }
+        else{
+            next = &(*(childIterator+1));
+        }
+    }
+    return next;
+}
+
+
+template<class T>
+void Tree<T>::printParents(){
+    typename map<T, T>::iterator it = parents.begin();
+    for(; it != parents.end(); it++){
+        cout << it->first << " " << it->second << endl;
+    }
+}
 
 //get array of vertexes 
 template<class T> 
-const set<T> CGraph<T>::getVertexes(){
+set<T> Tree<T>::getVertexes(){
     set<T> used;
     typename map<T, vector<T> >::iterator it;
     //go through the map
-    for(it = this->graph.begin(); it != this->graph.end(); it++){
+    for(it = tree.begin(); it != tree.end(); it++){
         if(used.count(it->first) == 0){
             used.insert(it->first);
         }
@@ -84,58 +185,28 @@ const set<T> CGraph<T>::getVertexes(){
     return used;
 }
 
-
 //get a cardinal number
 template<class T> 
-const int CGraph<T>::getVertexCount(){
-    return getVertexes().size();
+int Tree<T>::getTreeOrder(){
+    return parents.size();
 }
     
-//add an edge to the graph
+//add an edge to the tree
 template<class T> 
-CGraph<T>& CGraph<T>::addEdge(const T &vertex1, const T &vertex2){
-    if(this->graph.count(vertex1) == 0){
-        pair<T, vector<T> > newEdge;
-        newEdge.first = vertex1;
-        newEdge.second.push_back(vertex2);
-        this->graph.insert(newEdge);
-    }
-    else{
-        typename map<T, vector<T> >::iterator it = this->graph.find(vertex1);
-        //insert this one into the list of the adjasency
-        it->second.push_back(vertex2);
-    }
+Tree<T>& Tree<T>::addEdge(const T &vertex1, const T &vertex2){
+    tree[vertex1].push_back(vertex2);
+    parents[vertex2] = vertex1;
+    order = parents.size();
     return *this;
 }
 
-template<class T> 
-CGraph<T>& CGraph<T>::addDoubleEdge(const T &vertex1, const T &vertex2){
-    addEdge(vertex1, vertex2);
-    addEdge(vertex2, vertex1);
-}
-
+//display all edges of the tree
 template<class T>
-CGraph<T>& CGraph<T>::rmEdge(const T &vertex1, const T &vertex2){
-    typename map<T, vector<T> >::iterator it = this->graph.find(vertex1);
-    int adjSize = it->second.size();
-
-    bool isFound = false;
-    for(int i = 0; i < adjSize && isFound == false; i++){
-        if(it->second.at(i) == vertex2){
-            it->second.erase(it->second.begin() + i);
-            isFound = true;
-        }
-    }
-    return *this;
-}
-
-//display all edges of the graph
-template<class T>
-void CGraph<T>::printGraph(){
+void Tree<T>::printTree(){
     typename map<T, vector<T> >::iterator curIt;
     typename map<T, vector<T> >::iterator endIt;
-    curIt = this->graph.begin();
-    endIt = this->graph.end();
+    curIt = this->tree.begin();
+    endIt = this->tree.end();
     while(curIt != endIt){
         int i = 0;
         //show the adjasent vertexes
@@ -151,20 +222,19 @@ void CGraph<T>::printGraph(){
 
 //dispay the traversal
 template<class T>
-void CGraph<T>::printWay(list<T> way){
-    typename list<T>::iterator it;
-    for(it = way.begin(); it != way.end(); it++){
-        cout << *it << endl;
+void Tree<T>::printPath(const vector<T> &path){
+    for(int i = 0; i < path.size(); i++){
+        cout << path[i] << " ";
     }
 }
 
 template<class T>
-list<T> CGraph<T>::goBreadth(const T &headVertex){
-    list<T> result;
+vector<T> Tree<T>::goBreadth(const T &headVertex){
+    vector<T> result;
     map<T, int> colors; //0 - white; 1 - grey; 2 - black
-    typename map<T, vector<T> >::iterator it = this->graph.begin();
+    typename map<T, vector<T> >::iterator it = this->tree.begin();
     for(int i = 0; i < this->getVertexCount(); i++){
-        colors.insert(it->first);
+        colors.insert(make_pair(it->first, 0));
         it++;
     }
     colors[headVertex] = 1;
@@ -174,10 +244,10 @@ list<T> CGraph<T>::goBreadth(const T &headVertex){
     while(fifo.size() != 0){
         while(fifo.size() != 0){
             curVertex = fifo.front();
-            for(int i = 0; i < this->graph[curVertex].size(); i++){
-                if(colors[this->graph[curVertex][i]] == 0){
-                    colors[this->graph[curVertex][i]] = 1;
-                    fifo.push(this->graph[curVertex][i]);
+            for(int i = 0; i < this->tree[curVertex].size(); i++){
+                if(colors[this->tree[curVertex][i]] == 0){
+                    colors[this->tree[curVertex][i]] = 1;
+                    fifo.push(this->tree[curVertex][i]);
                 }
             }
             fifo.pop();
@@ -199,112 +269,4 @@ list<T> CGraph<T>::goBreadth(const T &headVertex){
     return result;
 }    
 
-template<class T>
-list<T>& CGraph<T>::visit(T &curVertex, stack<T> &lifo, map<T,int> &colors, list<T> &result){
-    while(lifo.size() != 0){
-        curVertex = lifo.top();
-        bool isPresent = false;
-        for(int i = 0; (i < this->graph[curVertex].size()) && (isPresent == false); i++){
-            if(colors[this->graph[curVertex][i]] == 0){
-                colors[this->graph[curVertex][i]] = 1;
-                lifo.push(this->graph[curVertex][i]);
-                isPresent = true;
-            }
-        }
-        if(isPresent == false){
-            lifo.pop();
-            colors[curVertex] = 2;
-            result.push_back(curVertex);
-        }
-    }
-    return result;
-}
 
-template<class T>
-list<T> CGraph<T>::goDepthComponent(const T &headVertex){
-    list<T> result;
-    map<T, int> colors; //0 - white; 1 - grey; 2 - black
-    typename map<T, vector<T> >::iterator it = this->graph.begin();
-    
-    for(int i = 0; i < this->getVertexCount(); i++){
-        colors.insert(pair<T, int>(it->first, 0));
-        it++;
-    }
-    colors[headVertex] = 1;
-    stack<T> lifo;
-    lifo.push(headVertex);
-    T curVertex;
-    visit(curVertex, lifo, colors, result);
-    return result;
-}    
-
-template<class T>
-list<T> CGraph<T>::goDepth(const T &headVertex){
-    list<T> result;
-    map<T, int> colors; //0 - white; 1 - grey; 2 - black
-    
-    typename map<T, vector<T> >::iterator it = this->graph.begin();
-    
-    for(int i = 0; i < this->getVertexCount(); i++){
-        colors.insert(it->first);
-        it++;
-    }
-    
-    colors[headVertex] = 1;
-    stack<T> lifo;
-    lifo.push(headVertex);
-    T curVertex;
-    
-    while(lifo.size() != 0){
-        visit(curVertex, lifo, colors, result);
-        typename map<T, int>::iterator itColors;
-        itColors = colors.begin();
-        bool isPresent = false;
-        //check if there are uncovered vertexes
-        for(int i = 0; i < this->getVertexCount() && isPresent == false; i++){
-            if(itColors->second == 0){
-                lifo.push(itColors->first);
-                itColors->second = 1;
-                isPresent = true;
-            }
-            itColors++;
-        }
-    }
-    return result;
-}    
-
-//DFS iterator
-template<class T>
-CGraph<T>::iterator DfsIterator (const T &headVertex){
-    map<T, int> colors; //0 - white; 1 - grey; 2 - black
-    
-    typename map<T, vector<T> >::iterator it = this->graph.begin();
-    for(int i = 0; i < this->getVertexCount(); i++){
-        colors.insert(it->first);
-        it++;
-    }
-    
-    colors[headVertex] = 1;
-    
-    
-    stack<T> lifo;
-    lifo.push(headVertex);
-    T curVertex;
-    
-    while(lifo.size() != 0){
-        visit(curVertex, lifo, colors, result);
-        typename map<T, int>::iterator itColors;
-        itColors = colors.begin();
-        bool isPresent = false;
-        //check if there are uncovered vertexes
-        for(int i = 0; i < this->getVertexCount() && isPresent == false; i++){
-            if(itColors->second == 0){
-                lifo.push(itColors->first);
-                itColors->second = 1;
-                isPresent = true;
-            }
-            itColors++;
-        }
-    }
-    return result;
-}    
