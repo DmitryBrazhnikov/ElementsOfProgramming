@@ -7,6 +7,7 @@
 #include <set>
 #include <limits>
 #include <algorithm>
+#include <exception>
 
 using std::cout;
 using std::cin;
@@ -20,7 +21,10 @@ using std::priority_queue;
 using std::pair;
 using std::make_pair;
 using std::find;
+using std::exception;
 
+class HasNoParentException : public exception { };
+class OutOfRangeException : public exception { };
 
 template<class T>
 class Tree{
@@ -36,12 +40,13 @@ class Tree{
         
         Tree(const T& root_) : root(root_) { }; 
         Tree<T>& addEdge(const T &vertex1, const T &vertex2);
-        int getTreeOrder();
+        int getTreeOrder() const;
         void printTree();
        
         vector<T> depthFirstSearch(const T &root);
         vector<T> breadthFirstSearch(const T &root);
         static void printPath(const vector<T> &path);
+        T& getParent(const T& vertex) throw (HasNoParentException);
         
     private:
         map<T, vector<T> > tree;
@@ -49,8 +54,7 @@ class Tree{
         map<T, T> parents;
         int order;
         //forward iterator functions
-        T* getParent(const T vertex);
-        T* nextVertex(const T& vertex, const T& prev); 
+        T& nextVertex(const T& vertex) throw (OutOfRangeException); 
 };
 
 template<class T>
@@ -78,12 +82,12 @@ class Tree<T>::DfsIterator {
 
         DfsIterator operator ++ (int) {
             DfsIterator result = *this;
-            curVertex = (tree->nextVertex(*curVertex, *curVertex));
+            curVertex = &(tree->nextVertex(*curVertex));
             return result;
         }
         
-        DfsIterator operator ++ () {
-            curVertex = (tree->nextVertex(*curVertex, *curVertex));
+        DfsIterator& operator ++ () {
+            curVertex = &(tree->nextVertex(*curVertex));
             return *this;
         }
         
@@ -117,69 +121,66 @@ typename Tree<T>::DfsIterator Tree<T>::end() {
 }
 
 template<class T>
-T* Tree<T>::getParent(const T vertex){
+T& Tree<T>::getParent(const T& vertex) throw (HasNoParentException) {
     T* parent;
-    if(vertex == root){
-        parent = 0;
-    }
-    else{
+    if(parents.count(vertex) > 0){
         parent = &parents[vertex];
     }
-    return parent;
+    else{
+        throw HasNoParentException();
+    }
+    return *parent;
 }
 
 template<class T>
-T* Tree<T>::nextVertex(const T& vertex, const T& prev){
+T& Tree<T>::nextVertex(const T& root) throw (OutOfRangeException) {
     T* next;
-    if(tree.count(vertex) > 0){
-        typename vector<T>::iterator childNodeIt = find(tree[vertex].begin(), tree[vertex].end(), prev);
-        if(childNodeIt == tree[vertex].end()){
-            next = &(tree[vertex][0]);
-        }
-        else{
-            if((childNodeIt + 1) != tree[vertex].end()){
-                next = &(*(childNodeIt+1));
-            }
-            else {
-                T* ancestor = getParent(*childNodeIt);
-                T* greatAncestor = getParent(*ancestor);
-                if(greatAncestor == 0){
-                    next = 0;
-                }
-                else{
-                    next = nextVertex(*greatAncestor, *ancestor);
-                }
-            }
-        }
-    } 
-    else {
-        T* parent = getParent(vertex);
-        if(parent == 0){
-            next = 0;
-        }
-        else {
-            typename vector<T>::iterator childNodeIt = find(tree[*parent].begin(), tree[*parent].end(), vertex);
-            if((childNodeIt + 1) == tree[*parent].end()){
-                T* ancestor = getParent(*childNodeIt);
-                T* greatAncestor = getParent(*ancestor);
-                if(greatAncestor == 0){
-                    next = 0;
-                }
-                else{
-                    next = nextVertex(*greatAncestor, *ancestor);
-                }
+
+    T prev = root;
+    T vertex = root;
+
+    bool isFound = false;
+    while(!isFound){
+        if(tree.count(vertex) > 0){
+            typename vector<T>::iterator childNodeIt = find(tree[vertex].begin(), tree[vertex].end(), prev);
+            if(childNodeIt == tree[vertex].end()){
+                next = &tree[vertex][0];
+                isFound = true;
             }
             else{
-                next = &(*(childNodeIt+1));
+                if((childNodeIt + 1) != tree[vertex].end()){
+                    next = &(*(childNodeIt+1));
+                    isFound = true;
+                }
+                else {
+                    try {
+                        prev = getParent(*childNodeIt);
+                        vertex = getParent(prev);
+                    }
+                    catch(HasNoParentException& exception){
+                        next = 0;
+                        isFound = true;
+                    }
+                }
+            }
+        } 
+        else {
+            try {
+                prev = vertex;
+                vertex = getParent(vertex);
+            }
+            catch(HasNoParentException& exception){
+                next = 0;
+                isFound = true;
             }
         }
     }
-    return next;
+    return *next;
 }
 
 //get a cardinal number
 template<class T> 
-int Tree<T>::getTreeOrder(){
+int Tree<T>::getTreeOrder() const {
     return order;
 }
     

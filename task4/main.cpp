@@ -11,7 +11,7 @@ int main() {
     int root;
     cin >> root;
     
-    Tree<int> tree(1);
+    Tree<int> tree(root);
     for(int i = 0; i < edgesNumber; i++){
         int from;
         int to;
@@ -23,10 +23,10 @@ int main() {
    cout << "bfs: ";
    tree.printPath(path);
    cout << endl;
-   path = tree.depthFirstSearch(1);
+   path = tree.depthFirstSearch(root);
    cout << "dfs: ";
    tree.printPath(path);
    cout << endl;
-   
+ 
    return 0;
 }
