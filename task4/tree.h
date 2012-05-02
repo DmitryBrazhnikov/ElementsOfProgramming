@@ -82,12 +82,22 @@ class Tree<T>::DfsIterator {
 
         DfsIterator operator ++ (int) {
             DfsIterator result = *this;
-            curVertex = &(tree->nextVertex(*curVertex));
+            try{
+                curVertex = &(tree->nextVertex(*curVertex));
+            }
+            catch(OutOfRangeException& exception){
+                curVertex = 0;
+            }
             return result;
         }
         
         DfsIterator& operator ++ () {
-            curVertex = &(tree->nextVertex(*curVertex));
+            try{
+                curVertex = &(tree->nextVertex(*curVertex));
+            }
+            catch(OutOfRangeException& exception){
+                curVertex = 0;
+            }
             return *this;
         }
         
@@ -136,42 +146,40 @@ template<class T>
 T& Tree<T>::nextVertex(const T& root) throw (OutOfRangeException) {
     T* next;
 
-    T prev = root;
-    T vertex = root;
+    T previousVertex = root;
+    T currentVertex = root;
 
     bool isFound = false;
     while(!isFound){
-        if(tree.count(vertex) > 0){
-            typename vector<T>::iterator childNodeIt = find(tree[vertex].begin(), tree[vertex].end(), prev);
-            if(childNodeIt == tree[vertex].end()){
-                next = &tree[vertex][0];
+        if(tree.count(currentVertex) > 0){
+            typename vector<T>::iterator childNodeIt = find(tree[currentVertex].begin(), tree[currentVertex].end(), previousVertex);
+            if(childNodeIt == tree[currentVertex].end()){
+                next = &tree[currentVertex][0];
                 isFound = true;
             }
             else{
-                if((childNodeIt + 1) != tree[vertex].end()){
+                if((childNodeIt + 1) != tree[currentVertex].end()){
                     next = &(*(childNodeIt+1));
                     isFound = true;
                 }
                 else {
                     try {
-                        prev = getParent(*childNodeIt);
-                        vertex = getParent(prev);
+                        previousVertex = getParent(*childNodeIt);
+                        currentVertex = getParent(previousVertex);
                     }
                     catch(HasNoParentException& exception){
-                        next = 0;
-                        isFound = true;
+                        throw OutOfRangeException();
                     }
                 }
             }
         } 
         else {
             try {
-                prev = vertex;
-                vertex = getParent(vertex);
+                previousVertex = currentVertex;
+                currentVertex = getParent(currentVertex);
             }
             catch(HasNoParentException& exception){
-                next = 0;
-                isFound = true;
+                throw OutOfRangeException();
             }
         }
     }
