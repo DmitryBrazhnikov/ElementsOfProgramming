@@ -19,13 +19,14 @@ int main() {
         tree.addEdge(from,to);
     }
     
+    cout << tree << endl;
    vector<int> path = tree.breadthFirstSearch(root);
    cout << "bfs: ";
-   tree.printPath(path);
+   printPath(path);
    cout << endl;
    path = tree.depthFirstSearch(root);
    cout << "dfs: ";
-   tree.printPath(path);
+   printPath(path);
    cout << endl;
  
    return 0;

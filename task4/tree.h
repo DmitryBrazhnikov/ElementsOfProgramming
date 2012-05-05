@@ -22,6 +22,7 @@ using std::pair;
 using std::make_pair;
 using std::find;
 using std::exception;
+using std::ostream;
 
 class HasNoParentException : public exception { };
 class OutOfRangeException : public exception { };
@@ -30,7 +31,6 @@ template<class T>
 class Tree{
     private:
         class DfsIterator; 
-    
     public:
         //nested private forward iterator support
         typedef DfsIterator iterator;
@@ -39,33 +39,30 @@ class Tree{
         DfsIterator end();
         
         Tree(const T& root_) : root(root_) { }; 
-        Tree<T>& addEdge(const T &vertex1, const T &vertex2);
-        int getTreeOrder() const;
-        void printTree();
-       
+        Tree<T>& addEdge(const T &fromVertex, const T &toVertex);
+        int getVerticesNumber() const;
+        
+        template <typename Type>
+        friend std::ostream& operator << (std::ostream& out, const Tree<Type>& tree);
+            
         vector<T> depthFirstSearch(const T &root);
         vector<T> breadthFirstSearch(const T &root);
-        static void printPath(const vector<T> &path);
         T& getParent(const T& vertex) throw (HasNoParentException);
-        
     private:
         map<T, vector<T> > tree;
         T root;
         map<T, T> parents;
-        int order;
+        int verticesNumber;
         //forward iterator functions
         T& nextVertex(const T& vertex) throw (OutOfRangeException); 
+        ostream& printTree(ostream& out);
 };
 
 template<class T>
 class Tree<T>::DfsIterator {
     public:
-        DfsIterator(){
-            tree = 0;
-            curVertex = 0;
-        }
         
-        DfsIterator(Tree<T>* tree_, T* curVertex_) : tree(tree_), curVertex(curVertex_) { }
+        DfsIterator(Tree<T>* treePtr = 0, T* curVertexPtr = 0) : tree(treePtr), curVertex(curVertexPtr) { }
 
         DfsIterator& operator = (const DfsIterator& it){
             this->tree = it.tree;
@@ -73,11 +70,11 @@ class Tree<T>::DfsIterator {
         }
         
         bool operator == (const DfsIterator& it) const {
-            return (tree == it.tree && curVertex == it.curVertex)? true : false;
+            return (tree == it.tree && curVertex == it.curVertex);
         }
         
         bool operator != (const DfsIterator& it) const {
-            return (!(*this == it))? true : false;
+            return !(*this == it);
         }
 
         DfsIterator operator ++ (int) {
@@ -101,14 +98,6 @@ class Tree<T>::DfsIterator {
             return *this;
         }
         
-        DfsIterator operator + (int increment) const {
-            DfsIterator result = *this;
-            for(int i = 0; i < increment; i++){
-                result++;
-            }
-            return result;
-        }
-        
         const T& operator * () const {
             return *curVertex;
         }
@@ -120,14 +109,12 @@ class Tree<T>::DfsIterator {
 
 template<class T>
 typename Tree<T>::DfsIterator Tree<T>::begin() {
-    DfsIterator it(this, &root);
-    return it;
+    return DfsIterator(this, &root);
 }
 
 template<class T>
 typename Tree<T>::DfsIterator Tree<T>::end() {
-    DfsIterator endit(this, 0);
-    return endit;
+    return DfsIterator(this, 0);
 }
 
 template<class T>
@@ -146,64 +133,58 @@ template<class T>
 T& Tree<T>::nextVertex(const T& root) throw (OutOfRangeException) {
     T* next;
 
-    T previousVertex = root;
-    T currentVertex = root;
+    try {
+        T previousVertex = root;
+        T currentVertex = root;
 
-    bool isFound = false;
-    while(!isFound){
-        if(tree.count(currentVertex) > 0){
-            typename vector<T>::iterator childNodeIt = find(tree[currentVertex].begin(), tree[currentVertex].end(), previousVertex);
-            if(childNodeIt == tree[currentVertex].end()){
-                next = &tree[currentVertex][0];
-                isFound = true;
-            }
-            else{
-                if((childNodeIt + 1) != tree[currentVertex].end()){
-                    next = &(*(childNodeIt+1));
+        bool isFound = false;
+        while(!isFound){
+            if(tree.count(currentVertex) > 0){
+                vector<T>& childNodes = tree[currentVertex];
+                typename vector<T>::iterator childNodeIt = find(childNodes.begin(), childNodes.end(), previousVertex);
+                if(childNodeIt == childNodes.end()){
+                    next = &childNodes[0];
+                    isFound = true;
+                }
+                else if((childNodeIt + 1) != childNodes.end()){
+                    next = &(*(childNodeIt + 1));
                     isFound = true;
                 }
                 else {
-                    try {
-                        previousVertex = getParent(*childNodeIt);
-                        currentVertex = getParent(previousVertex);
-                    }
-                    catch(HasNoParentException& exception){
-                        throw OutOfRangeException();
-                    }
+                    previousVertex = getParent(*childNodeIt);
+                    currentVertex = getParent(previousVertex);
                 }
-            }
-        } 
-        else {
-            try {
+            } 
+            else {
                 previousVertex = currentVertex;
                 currentVertex = getParent(currentVertex);
             }
-            catch(HasNoParentException& exception){
-                throw OutOfRangeException();
-            }
         }
+    }
+    catch(HasNoParentException& exception){
+        throw OutOfRangeException();
     }
     return *next;
 }
 
 //get a cardinal number
 template<class T> 
-int Tree<T>::getTreeOrder() const {
-    return order;
+int Tree<T>::getVerticesNumber() const {
+    return verticesNumber;
 }
     
 //add an edge to the tree
 template<class T> 
-Tree<T>& Tree<T>::addEdge(const T &vertex1, const T &vertex2){
-    tree[vertex1].push_back(vertex2);
-    parents[vertex2] = vertex1;
-    order = parents.size();
+Tree<T>& Tree<T>::addEdge(const T &fromVertex, const T &toVertex){
+    tree[fromVertex].push_back(toVertex);
+    parents[toVertex] = fromVertex;
+    verticesNumber = parents.size();
     return *this;
 }
 
 //display all edges of the tree
 template<class T>
-void Tree<T>::printTree(){
+ostream& Tree<T>::printTree(ostream& out){
     typename map<T, vector<T> >::iterator curIt;
     typename map<T, vector<T> >::iterator endIt;
     curIt = this->tree.begin();
@@ -212,18 +193,25 @@ void Tree<T>::printTree(){
         int i = 0;
         //show the adjasent vertexes
         while(i < curIt->second.size()){
-            cout << curIt->first << " -> ";
-            cout << curIt->second.at(i);
-            cout << endl;
+            out << curIt->first << " -> ";
+            out << curIt->second.at(i);
+            out << endl;
             i++;
         }
         curIt++;
     }
+    return out;
+}
+
+template<class T>
+ostream& operator << (ostream& out, const Tree<T>& tree){
+    out << tree.verticesNumber;
+    return out; 
 }
 
 //print a traversal
 template<class T>
-void Tree<T>::printPath(const vector<T> &path){
+void printPath(const vector<T> &path){
     for(int i = 0; i < path.size(); i++){
         cout << path[i] << " ";
     }
@@ -271,7 +259,7 @@ vector<T> Tree<T>::breadthFirstSearch(const T &root){
         itColors = colors.begin();
         bool isPresent = false;
         //check if there are uncovered vertexes
-        for(int i = 0; (i < this->order) && (isPresent != true); i++){
+        for(int i = 0; (i < this->getVerticesNumber()) && !isPresent; i++){
             if(itColors->second == 0){
                 fifo.push(itColors->first);
                 itColors->second = 1;
@@ -282,5 +270,20 @@ vector<T> Tree<T>::breadthFirstSearch(const T &root){
     }
     return result;
 }    
+
+//template<class T>
+//Tree<T> Type<T>::treeRestore(Tree<T>::iterator dfsIt, const vector<T> bfs){
+    
+
+
+
+
+
+
+
+
+
+
+
 
 
