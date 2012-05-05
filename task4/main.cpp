@@ -19,8 +19,8 @@ int main() {
         tree.addEdge(from,to);
     }
     
-    cout << tree << endl;
-   vector<int> path = tree.breadthFirstSearch(root);
+   cout << tree << endl;
+   std::vector<int> path = tree.breadthFirstSearch(root);
    cout << "bfs: ";
    printPath(path);
    cout << endl;
