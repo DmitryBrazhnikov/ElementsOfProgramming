@@ -2,26 +2,11 @@
 #include "polynom.h"
 
 bool NullObject::operator == (int comparable) const {
-    bool isEqual;
-    if(comparable == 0){
-        isEqual = true;
-    } 
-    else {
-        isEqual = false;
-    }
-    return isEqual;
+    return comparable == 0;
 }
 
 bool NullObject::operator == (const Polynom &comparable) const {
-    Polynom NullPolynom(0);
-    bool isEqual;
-    if(comparable == NullPolynom){
-        isEqual = true;
-    } 
-    else {
-        isEqual = false;
-    }
-    return isEqual;
+    return Polynom(0) == comparable;
 }
 
 bool NullObject::operator == (const Fraction &comparable) const {

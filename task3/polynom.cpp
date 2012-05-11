@@ -3,12 +3,7 @@
 #include "gcd.h"
 #include <algorithm>
 
-using std::abs;
-
-using std::cout;
-using std::endl;
-      
-Polynom::Polynom(int degree_) : coefficients(degree_ + 1, 0), degree(degree_) { }
+Polynom::Polynom(int degree_) : coefficients(degree_ + 1), degree(degree_) { }
 
 bool Polynom::operator == (const Polynom &comparable) const {
     bool isEqual = true;
@@ -61,7 +56,7 @@ Polynom Polynom::operator - () const {
 
 int Polynom::resize(int newDegree){
     if(coefficients.size() < (newDegree + 1)){
-        coefficients.resize(newDegree + 1, 0);
+        coefficients.resize(newDegree + 1);
     }
     degree = newDegree;
     return degree;
@@ -124,7 +119,7 @@ int Polynom::notNullCount() const {
 
 Polynom Polynom::operator / (const Fraction &divisor) const {
     Polynom result = *this;
-    for(int i = 0; i <= result.getDegree(); i++){
+    for(size_t i = 0; i <= result.getDegree(); i++){
         result[i] = result[i] / divisor;
     }
     return result;
@@ -177,10 +172,11 @@ const Fraction& Polynom::operator [] (int degree) const{
 
 void Polynom::print() const {
     for(int i = getDegree(); i >= 0; i--){
-        cout << coefficients[i].getNum() << "/" << coefficients[i].getDenom() << "x^" << i;
+        std::cout << coefficients[i].getNum() << "/" << coefficients[i].getDenom() << "x^" << i;
         if(i > 0){
-            cout << " + ";
+            std::cout << " + ";
         }
     }
-    cout << endl;
+    std::cout << std::endl;
 }
+

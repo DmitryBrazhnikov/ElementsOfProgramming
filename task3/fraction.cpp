@@ -2,7 +2,6 @@
 #include "gcd.h"
 
 Fraction::Fraction(int numerator, int denominator) : num(numerator), denom(denominator) { }
-Fraction::Fraction(int numerator) : num(numerator), denom(1) { }
 
 Fraction Fraction::operator - () const {
     return Fraction(-num, denom);
@@ -50,8 +49,9 @@ bool Fraction::operator < (const Fraction &comparable) const {
     return isLess;
 }
 
-bool Fraction::isNull() const {
-    return (num == 0)? true : false;
+bool Fraction::isNull() const
+{
+    return num == 0;
 }
 
 Fraction Fraction::operator + (const Fraction &addend) const {

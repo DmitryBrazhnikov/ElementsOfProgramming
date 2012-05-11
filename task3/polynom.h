@@ -2,16 +2,13 @@
 #include <vector>
 #include "fraction.h"
  
-using std::vector;
-
 class Polynom {
     public:
-        Polynom(int degree);
+        explicit Polynom(int degree);
         
         int getDegree() const;
         const Fraction& leadCoef() const;
         int notNullCount() const;
-        int resize(int newDegree);
       
         bool operator == (const Polynom &comparable) const; 
         bool operator < (const Polynom &comparable) const; 
@@ -33,8 +30,9 @@ class Polynom {
 
     private:
         void updateDegree();
+        int resize(int newDegree);
 
         int degree;
-        vector<Fraction> coefficients;
+        std::vector<Fraction> coefficients;
 };
 

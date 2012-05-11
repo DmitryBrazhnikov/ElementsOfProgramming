@@ -2,8 +2,8 @@
 
 class Fraction {
     public:
-        Fraction(int numerator, int denominator);
-        Fraction(int numerator);
+        Fraction(int numerator, int denominator = 1);
+        Fraction(): num(0), denom(1) { }
         
         Fraction operator - () const;
         Fraction& reduce();
@@ -25,3 +25,4 @@ class Fraction {
         int num; 
         int denom;
 };
+
