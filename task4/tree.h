@@ -9,23 +9,8 @@
 #include <algorithm>
 #include <exception>
 
-using std::cout;
-using std::cin;
-using std::endl;
-using std::queue;
-using std::vector;
-using std::stack;
-using std::map;
-using std::numeric_limits;
-using std::priority_queue;
-using std::pair;
-using std::make_pair;
-using std::find;
-using std::exception;
-using std::ostream;
-
-class HasNoParentException : public exception { };
-class OutOfRangeException : public exception { };
+class HasNoParentException : public std::exception { };
+class OutOfRangeException : public std::exception { };
 
 template<class T>
 class Tree{
@@ -43,19 +28,20 @@ class Tree{
         int getVerticesNumber() const;
         
         template <typename Type>
-        friend std::ostream& operator << (std::ostream& out, const Tree<Type>& tree);
+        friend std::ostream& operator << (std::ostream& out, Tree<Type>& tree);
+        
+        void printTree() const;
             
-        vector<T> depthFirstSearch(const T &root);
-        vector<T> breadthFirstSearch(const T &root);
+        std::vector<T> depthFirstSearch(const T &root);
+        std::vector<T> breadthFirstSearch(const T &root);
         T& getParent(const T& vertex) throw (HasNoParentException);
     private:
-        map<T, vector<T> > tree;
+        std::map<T, std::vector<T> > tree;
         T root;
-        map<T, T> parents;
+        std::map<T, T> parents;
         int verticesNumber;
         //forward iterator functions
         T& nextVertex(const T& vertex) throw (OutOfRangeException); 
-        ostream& printTree(ostream& out);
 };
 
 template<class T>
@@ -140,8 +126,8 @@ T& Tree<T>::nextVertex(const T& root) throw (OutOfRangeException) {
         bool isFound = false;
         while(!isFound){
             if(tree.count(currentVertex) > 0){
-                vector<T>& childNodes = tree[currentVertex];
-                typename vector<T>::iterator childNodeIt = find(childNodes.begin(), childNodes.end(), previousVertex);
+                std::vector<T>& childNodes = tree[currentVertex];
+                typename std::vector<T>::iterator childNodeIt = std::find(childNodes.begin(), childNodes.end(), previousVertex);
                 if(childNodeIt == childNodes.end()){
                     next = &childNodes[0];
                     isFound = true;
@@ -184,18 +170,21 @@ Tree<T>& Tree<T>::addEdge(const T &fromVertex, const T &toVertex){
 
 //display all edges of the tree
 template<class T>
-ostream& Tree<T>::printTree(ostream& out){
-    typename map<T, vector<T> >::iterator curIt;
-    typename map<T, vector<T> >::iterator endIt;
-    curIt = this->tree.begin();
-    endIt = this->tree.end();
+void Tree<T>::printTree() const {
+    operator<<(std::cout, *this);
+}
+
+template<class T>
+std::ostream& operator << (std::ostream& out, Tree<T>& tree){
+    typename std::map<T, std::vector<T> >::iterator curIt = tree.tree.begin();
+    typename std::map<T, std::vector<T> >::iterator endIt = tree.tree.end();
     while(curIt != endIt){
         int i = 0;
         //show the adjasent vertexes
         while(i < curIt->second.size()){
             out << curIt->first << " -> ";
             out << curIt->second.at(i);
-            out << endl;
+            out << std::endl;
             i++;
         }
         curIt++;
@@ -203,23 +192,17 @@ ostream& Tree<T>::printTree(ostream& out){
     return out;
 }
 
-template<class T>
-ostream& operator << (ostream& out, const Tree<T>& tree){
-    out << tree.verticesNumber;
-    return out; 
-}
-
 //print a traversal
 template<class T>
-void printPath(const vector<T> &path){
+void printPath(const std::vector<T> &path){
     for(int i = 0; i < path.size(); i++){
-        cout << path[i] << " ";
+        std::cout << path[i] << " ";
     }
 }
 
 template<class T>
-vector<T> Tree<T>::depthFirstSearch(const T& root){
-    vector<T> result;
+std::vector<T> Tree<T>::depthFirstSearch(const T& root){
+    std::vector<T> result;
     Tree<T>::iterator it;
     for(it = this->begin(); it != this->end(); it++){
         result.push_back(*it);
@@ -229,16 +212,16 @@ vector<T> Tree<T>::depthFirstSearch(const T& root){
 
 
 template<class T>
-vector<T> Tree<T>::breadthFirstSearch(const T &root){
-    vector<T> result;
-    map<T, int> colors; //0 - white; 1 - grey; 2 - black
-    typename map<T, T >::iterator it = parents.begin();
+std::vector<T> Tree<T>::breadthFirstSearch(const T &root){
+    std::vector<T> result;
+    std::map<T, int> colors; //0 - white; 1 - grey; 2 - black
+    typename std::map<T, T >::iterator it = parents.begin();
     for(; it != parents.end(); it++){
         colors[it->first] = 0;
     }
 
     colors[root] = 1;
-    queue<T> fifo;
+    std::queue<T> fifo;
     fifo.push(root);
     T curVertex;
     while(fifo.size() != 0){
@@ -255,7 +238,7 @@ vector<T> Tree<T>::breadthFirstSearch(const T &root){
             fifo.pop();
             result.push_back(curVertex);
         }
-        typename map<T, int>::iterator itColors;
+        typename std::map<T, int>::iterator itColors;
         itColors = colors.begin();
         bool isPresent = false;
         //check if there are uncovered vertexes
@@ -272,7 +255,7 @@ vector<T> Tree<T>::breadthFirstSearch(const T &root){
 }    
 
 //template<class T>
-//Tree<T> Type<T>::treeRestore(Tree<T>::iterator dfsIt, const vector<T> bfs){
+//Tree<T> Type<T>::treeRestore(Tree<T>::iterator dfsIt, const std::vector<T> bfs){
     
 
 
