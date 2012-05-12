@@ -6,15 +6,25 @@
 #include <cstdlib>
 #include <set>
 #include <cassert>
+#include "primenumbers.h"
 
 void testInt() { 
     srand(1000);
-    for(int i = 0; i < 500; i++){
-        int lhs = rand() % 1000 + 1;  
-        int rhs = rand() % 1000 + 1; 
-        int greatCommonDivisor = gcd(lhs,rhs);
+    
+    PrimeNumbers prime(100);
+    std::vector<int> primeNumbers = prime.getPrimeNumbers();
+    
+    for(int i = 0; i < 100; i++){
+        int primeCount = primeNumbers.size();
         
-        std::cout << "(" << lhs << "," << rhs << ") = " << greatCommonDivisor << std::endl;
+        int initGcd = rand() % 100  + 1;
+        
+        int lhs = primeNumbers[rand() % (primeCount / 2)];
+        int rhs = primeNumbers[rand() % (primeCount / 2) + primeCount/2 - 1];    
+        
+        int resultGcd = gcd(initGcd * lhs, initGcd * rhs); 
+        
+        assert(initGcd == resultGcd);
     }
 }
 
@@ -63,32 +73,6 @@ void testPolynom() {
             leftPolynom = leftPolynom * factor;
         }
         
-        
-        /*
-        std::set<int>::iterator lsit = leftRoots.begin();
-        for(; lsit != leftRoots.end(); lsit++){
-            std::cout << *lsit << " ";
-        }
-        std::cout << std::endl;
-        std::set<int>::iterator rsit = rightRoots.begin();
-        for(; rsit != rightRoots.end(); rsit++){
-            std::cout << *rsit << " ";
-        }
-        std::cout << std::endl;
-
-        for(int i = 0; i < RootsCount; i++){
-            std::cout << commonRoots[i] << " ";
-        }
-        std::cout << std::endl;
-        for(int i = 0; i < RootsCount; i++){
-            std::cout << differentRoots[i] << " ";
-        }
-        std::cout << std::endl;
-
-        leftPolynom.print();
-        rightPolynom.print();
-        */
-
         Polynom initGcd(0);
         initGcd[0] = 1;
 
@@ -106,9 +90,9 @@ void testPolynom() {
 }
 
 int main() {
-    //testInt();
+    testInt();
     testPolynom();
-
+    
     return 0;
 }
 
