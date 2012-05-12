@@ -1,5 +1,4 @@
 #pragma once
-#include "nullobject.h"
 #include <algorithm>
 
 template<class T>

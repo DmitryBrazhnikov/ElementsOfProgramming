@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "fraction.h"
+#include <ostream>
  
 class Polynom {
     public:
@@ -8,9 +9,9 @@ class Polynom {
         
         int getDegree() const;
         const Fraction& leadCoef() const;
-        int notNullCount() const;
       
         bool operator == (const Polynom &comparable) const; 
+        bool operator != (const Polynom &comparable) const; 
         bool operator < (const Polynom &comparable) const; 
         bool operator > (const Polynom &comparable) const; 
 
@@ -22,17 +23,19 @@ class Polynom {
         Polynom operator / (const Polynom &divisor) const;
         Polynom operator / (const Fraction &divisor) const;
         Polynom operator % (const Polynom &divisor) const;
-        
+        Polynom& normalize();
+       
+        friend std::ostream& operator << (std::ostream& out, const Polynom& polynom);
         void print() const;
         
         Fraction& operator [] (int degree);
         const Fraction& operator [] (int degree) const;
 
     private:
-        void updateDegree();
-        int resize(int newDegree);
-
+        void updateDegree(); //uodate value of the member degree
         int degree;
+        
+        int resize(int newDegree); //resize the array of coefficients
         std::vector<Fraction> coefficients;
 };
 

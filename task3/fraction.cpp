@@ -1,5 +1,6 @@
 #include "fraction.h"
 #include "gcd.h"
+#include <cassert>
 
 Fraction::Fraction(int numerator, int denominator) : num(numerator), denom(denominator) { }
 
@@ -11,6 +12,10 @@ Fraction& Fraction::reduce() {
      int divisor = gcd(num, denom);
      num /= divisor;
      denom /= divisor;
+     if(denom < 0){
+         denom *= -1;
+         num *= -1;
+     }
      return *this;
 }
 
@@ -23,35 +28,24 @@ int Fraction::getDenom() const {
 }
 
 bool Fraction::operator == (const Fraction &comparable) const {
-    bool isEqual;
     Fraction lhs = *this;
     Fraction rhs = comparable;
     lhs.reduce();
     rhs.reduce();
-    if(lhs.num == rhs.num && lhs.denom == rhs.denom){
-        isEqual = true;
-    }
-    else {
-        isEqual = false;
-    }
-    return isEqual;
+    return (lhs.num == rhs.num && lhs.denom == rhs.denom);
+}
+
+bool Fraction::operator != (const Fraction &comparable) const {
+    return !(*this == comparable);
 }
 
 bool Fraction::operator < (const Fraction &comparable) const {
-    bool isLess;
     Fraction result = *this - comparable;
-    if(result.num < 0){
-        isLess = true;
-    }
-    else {
-        isLess = false;
-    }
-    return isLess;
+    return (result.num < 0);
 }
 
-bool Fraction::isNull() const
-{
-    return num == 0;
+bool Fraction::isNull() const {
+    return (num == 0);
 }
 
 Fraction Fraction::operator + (const Fraction &addend) const {
@@ -83,6 +77,7 @@ Fraction Fraction::operator * (const Fraction &multiplier) const {
 }
 
 Fraction Fraction::operator / (const Fraction &divisor) const {
+    assert(divisor != Fraction(0));
     Fraction result = *this;
     result.num *= divisor.denom;
     result.denom *= divisor.num;

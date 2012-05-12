@@ -20,6 +20,10 @@ bool Polynom::operator == (const Polynom &comparable) const {
     return isEqual;
 }
 
+bool Polynom::operator != (const Polynom &comparable) const {
+    return !(*this == comparable);
+}
+
 bool Polynom::operator < (const Polynom &comparable) const {
     bool isLess = false;
     if(degree < comparable.getDegree()){
@@ -39,11 +43,7 @@ bool Polynom::operator < (const Polynom &comparable) const {
 }
 
 bool Polynom::operator > (const Polynom &comparable) const {
-    bool isGreater = true;
-    if(!(comparable < *this)){
-        isGreater = false;
-    }
-    return isGreater;
+    return (comparable < *this);
 }
          
 Polynom Polynom::operator - () const {
@@ -106,23 +106,32 @@ Polynom Polynom::operator * (const Polynom &factor) const {
     return result;
 }
 
-
-int Polynom::notNullCount() const {
-    int count = 0;
-    for(int i = 0; i < degree; i++){
-        if(!((*this)[i].isNull())){
-            count++;
-        }
-    }
-    return count;
-}
-
 Polynom Polynom::operator / (const Fraction &divisor) const {
     Polynom result = *this;
     for(size_t i = 0; i <= result.getDegree(); i++){
         result[i] = result[i] / divisor;
     }
     return result;
+}
+
+Polynom& Polynom::normalize() {
+    int gcdCoefNum = leadCoef().getNum();
+    int gcdCoefDenom = leadCoef().getDenom();
+    for(int i = 1; i < degree; i++){
+        gcdCoefNum = gcd(gcdCoefNum, coefficients[i].getNum());
+        gcdCoefDenom = gcd(gcdCoefDenom, coefficients[i].getDenom());
+    }
+    *this = *this / Fraction(gcdCoefNum,gcdCoefDenom);
+    if(this->leadCoef().getNum() < 0){
+        *this = *this * Fraction(-1);
+    }
+    for(int i = 0; i <= degree; i++){
+        int denom = coefficients[i].getDenom();
+        if(denom != 1){
+            *this = *this * Fraction(denom);  
+        }
+    }
+    return *this;
 }
 
 Polynom Polynom::operator / (const Polynom &polyDivisor) const {
@@ -144,8 +153,7 @@ Polynom Polynom::operator / (const Polynom &polyDivisor) const {
 }
 
 Polynom Polynom::operator % (const Polynom &divisor) const {
-    Polynom reminder = (*this - divisor * (*this / divisor));
-    return reminder; 
+    return (*this - divisor * (*this / divisor));
 }
         
 void Polynom::updateDegree(){
@@ -171,12 +179,18 @@ const Fraction& Polynom::operator [] (int degree) const{
 }
 
 void Polynom::print() const {
-    for(int i = getDegree(); i >= 0; i--){
-        std::cout << coefficients[i].getNum() << "/" << coefficients[i].getDenom() << "x^" << i;
+    std::cout << *this;
+}
+
+std::ostream& operator << (std::ostream& out, const Polynom& polynom){
+    for(int i = polynom.getDegree(); i >= 0; i--){
+        out << polynom.coefficients[i].getNum() << "/" << polynom.coefficients[i].getDenom() << "x^" << i;
         if(i > 0){
-            std::cout << " + ";
+            out << " + ";
         }
     }
-    std::cout << std::endl;
+    out << std::endl;
+    return out;
 }
+
 

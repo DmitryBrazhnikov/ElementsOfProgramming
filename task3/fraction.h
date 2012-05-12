@@ -13,6 +13,7 @@ class Fraction {
         int getDenom() const; 
         
         bool operator == (const Fraction &comparable) const; 
+        bool operator != (const Fraction &comparable) const; 
         bool operator < (const Fraction &comparable) const; 
         
         Fraction operator + (const Fraction &addend) const;
