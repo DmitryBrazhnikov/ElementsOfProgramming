@@ -115,20 +115,22 @@ Polynom Polynom::operator / (const Fraction &divisor) const {
 }
 
 Polynom& Polynom::normalize() {
-    int gcdCoefNum = leadCoef().getNum();
-    int gcdCoefDenom = leadCoef().getDenom();
-    for(int i = 1; i < degree; i++){
-        gcdCoefNum = gcd(gcdCoefNum, coefficients[i].getNum());
-        gcdCoefDenom = gcd(gcdCoefDenom, coefficients[i].getDenom());
-    }
-    *this = *this / Fraction(gcdCoefNum,gcdCoefDenom);
-    if(this->leadCoef().getNum() < 0){
-        *this = *this * Fraction(-1);
-    }
-    for(int i = 0; i <= degree; i++){
-        int denom = coefficients[i].getDenom();
-        if(denom != 1){
-            *this = *this * Fraction(denom);  
+    if(*this != Polynom(0)){
+        int gcdCoefNum = leadCoef().getNum();
+        int gcdCoefDenom = leadCoef().getDenom();
+        for(int i = 1; i < degree; i++){
+            gcdCoefNum = gcd(gcdCoefNum, coefficients[i].getNum());
+            gcdCoefDenom = gcd(gcdCoefDenom, coefficients[i].getDenom());
+        }
+        *this = *this / Fraction(gcdCoefNum,gcdCoefDenom);
+        if(this->leadCoef().getNum() < 0){
+            *this = *this * Fraction(-1);
+        }
+        for(int i = 0; i <= degree; i++){
+            int denom = coefficients[i].getDenom();
+            if(denom != 1){
+                *this = *this * Fraction(denom);  
+            }
         }
     }
     return *this;
@@ -153,7 +155,7 @@ Polynom Polynom::operator / (const Polynom &polyDivisor) const {
 }
 
 Polynom Polynom::operator % (const Polynom &divisor) const {
-    return (*this - divisor * (*this / divisor));
+    return (*this - divisor * (*this / divisor)).normalize();
 }
         
 void Polynom::updateDegree(){

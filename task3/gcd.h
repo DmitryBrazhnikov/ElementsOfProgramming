@@ -1,5 +1,8 @@
 #pragma once
 #include <algorithm>
+#include <iostream>
+#include <typeinfo>
+#include "polynom.h"
 
 template<class T>
 T gcd(T dividend, T divisor) {

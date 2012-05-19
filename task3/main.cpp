@@ -28,61 +28,64 @@ void testInt() {
     }
 }
 
+Polynom getMonom(const Fraction& leadCoefficient, const Fraction& absoluteTerm){
+    Polynom monom(1);
+    monom[1] = leadCoefficient;
+    monom[0] = absoluteTerm;
+    return monom;
+}
+
+Polynom buildPolynom(const std::vector<int>& roots){
+    Polynom result(0);
+    result[0] = 1;
+    
+    for(int i = 0; i < roots.size(); i++){
+        Polynom factor = getMonom(1, -roots[i]);
+        result = result * factor;
+    }
+
+    return result;
+}
+
+std::vector<int> intersect(std::vector<int> leftSet, std::vector<int> rightSet){
+    std::vector<int> commonSet(leftSet.size());
+    std::vector<int>::iterator intersectIt;
+
+    sort(leftSet.begin(), leftSet.end());
+    sort(rightSet.begin(), rightSet.end());
+    
+    if(leftSet.size() > rightSet.size()){ 
+        intersectIt = set_intersection(leftSet.begin(), leftSet.end(), rightSet.begin(), rightSet.end(), commonSet.begin());
+    }
+    else {
+        intersectIt = set_intersection(rightSet.begin(), rightSet.end(), leftSet.begin(), leftSet.end(), commonSet.begin());
+    }
+    return std::vector<int>(commonSet.begin(), intersectIt);
+}
+     
+
+
 void testPolynom() {
     srand(1000);
-    for(int n = 0; n < 50; n++){ 
-        int RootsCount = 6; 
-        std::set<int> leftRoots;
-        std::set<int> rightRoots;
-        std::vector<int> commonRoots(RootsCount);
-        std::vector<int> differentRoots(RootsCount);
+    for(int n = 0; n < 100; n++){ 
+        const int NUM_ROOTS = 10; 
+        
+        std::vector<int> leftRoots(NUM_ROOTS);
+        std::vector<int> rightRoots(NUM_ROOTS);
 
-        for(int i = 0; i < RootsCount; i++){
-            leftRoots.insert(rand() % 5 + 1);
-            rightRoots.insert(rand() % 5 + 1);
+        for(int i = 0; i < NUM_ROOTS; i++){
+            leftRoots[i] = rand() % 2 + 1; 
+            rightRoots[i] = rand() % 2 + 1;
         }
         
-        std::vector<int>::iterator intersectIt;
-        std::vector<int>::iterator differenceIt;
-
-        std::vector<int>::iterator commonIt = commonRoots.begin();
-        std::vector<int>::iterator differentIt = differentRoots.begin();
-        Polynom factor(1); 
-        factor[1] = 1;
-         
-        if(leftRoots.size() > rightRoots.size()){ 
-            differenceIt = set_difference(leftRoots.begin(), leftRoots.end(), rightRoots.begin(), rightRoots.end(), differentRoots.begin());
-            intersectIt = set_intersection(leftRoots.begin(), leftRoots.end(), rightRoots.begin(), rightRoots.end(), commonRoots.begin());
-        }
-        else {
-            differenceIt = set_difference(rightRoots.begin(), rightRoots.end(), leftRoots.begin(), leftRoots.end(), differentRoots.begin());
-            intersectIt = set_intersection(rightRoots.begin(), rightRoots.end(), leftRoots.begin(), leftRoots.end(), commonRoots.begin());
-        }
+        std::vector<int> commonRoots = intersect(leftRoots, rightRoots);
         
-        Polynom rightPolynom(0);
-        rightPolynom[0] = 1;
-        for(; differentIt != differenceIt; differentIt++){
-            factor[0] = -*differentIt;
-            rightPolynom = rightPolynom * factor;
-        }
+        Polynom initGcd = buildPolynom(commonRoots);  
         
-        Polynom leftPolynom(0);
-        leftPolynom[0] = 1;
-        for(; commonIt != intersectIt; commonIt++){
-            factor[0] = -*commonIt;
-            leftPolynom = leftPolynom * factor;
-        }
+        Polynom leftPolynom = buildPolynom(leftRoots);
+        Polynom rightPolynom = buildPolynom(rightRoots); 
+        Polynom resultGcd  = gcd(leftPolynom, rightPolynom);
         
-        Polynom initGcd(0);
-        initGcd[0] = 1;
-
-        factor[0] = -(rand() % 5 + 1);
-        initGcd = initGcd * factor;
-        factor[0] = -(rand() % 5 + 1);
-        initGcd = initGcd * factor;
-        
-        Polynom resultGcd  = gcd(leftPolynom,rightPolynom);
-        resultGcd = gcd(initGcd * leftPolynom, initGcd * rightPolynom);
         resultGcd.normalize(); 
         
         assert(initGcd == resultGcd);
