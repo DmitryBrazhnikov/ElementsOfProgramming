@@ -22,7 +22,9 @@ class Tree{
         friend class DfsIterator;
         DfsIterator begin();
         DfsIterator end();
-        
+       
+        const T& getRoot();
+         
         Tree(const T& root_) : root(root_) { }; 
         Tree<T>& addEdge(const T &fromVertex, const T &toVertex);
         int getVerticesNumber() const;
@@ -32,6 +34,7 @@ class Tree{
         
         void printTree() const;
             
+        std::vector<T> depthFirstSearchThroughIterator(const T &root);
         std::vector<T> depthFirstSearch(const T &root);
         std::vector<T> breadthFirstSearch(const T &root);
         T& getParent(const T& vertex) throw (HasNoParentException);
@@ -41,7 +44,7 @@ class Tree{
         std::map<T, T> parents;
         int verticesNumber;
         //forward iterator functions
-        T& nextVertex(const T& vertex) throw (OutOfRangeException); 
+        T& nextVertex(const T& vertex) throw (OutOfRangeException);
 };
 
 template<class T>
@@ -101,6 +104,11 @@ typename Tree<T>::DfsIterator Tree<T>::begin() {
 template<class T>
 typename Tree<T>::DfsIterator Tree<T>::end() {
     return DfsIterator(this, 0);
+}
+
+template<class T>
+const T& Tree<T>::getRoot(){
+    return root;
 }
 
 template<class T>
@@ -201,7 +209,7 @@ void printPath(const std::vector<T> &path){
 }
 
 template<class T>
-std::vector<T> Tree<T>::depthFirstSearch(const T& root){
+std::vector<T> Tree<T>::depthFirstSearchThroughIterator(const T& root){
     std::vector<T> result;
     Tree<T>::iterator it;
     for(it = this->begin(); it != this->end(); it++){
@@ -214,13 +222,13 @@ std::vector<T> Tree<T>::depthFirstSearch(const T& root){
 template<class T>
 std::vector<T> Tree<T>::breadthFirstSearch(const T &root){
     std::vector<T> result;
-    std::map<T, int> colors; //0 - white; 1 - grey; 2 - black
+    std::map<T, int> visited; //0 - white; 1 - grey; 2 - black
     typename std::map<T, T >::iterator it = parents.begin();
     for(; it != parents.end(); it++){
-        colors[it->first] = 0;
+        visited[it->first] = 0;
     }
 
-    colors[root] = 1;
+    visited[root] = 1;
     std::queue<T> fifo;
     fifo.push(root);
     T curVertex;
@@ -229,8 +237,8 @@ std::vector<T> Tree<T>::breadthFirstSearch(const T &root){
             curVertex = fifo.front();
             if(tree.count(curVertex) > 0){
                 for(int i = 0; i < this->tree[curVertex].size(); i++){
-                    if(colors[this->tree[curVertex][i]] == 0){
-                        colors[this->tree[curVertex][i]] = 1;
+                    if(visited[this->tree[curVertex][i]] == 0){
+                        visited[this->tree[curVertex][i]] = 1;
                         fifo.push(this->tree[curVertex][i]);
                     }
                 }
@@ -239,7 +247,7 @@ std::vector<T> Tree<T>::breadthFirstSearch(const T &root){
             result.push_back(curVertex);
         }
         typename std::map<T, int>::iterator itColors;
-        itColors = colors.begin();
+        itColors = visited.begin();
         bool isPresent = false;
         //check if there are uncovered vertexes
         for(int i = 0; (i < this->getVerticesNumber()) && !isPresent; i++){
@@ -254,19 +262,41 @@ std::vector<T> Tree<T>::breadthFirstSearch(const T &root){
     return result;
 }    
 
-//template<class T>
-//Tree<T> Type<T>::treeRestore(Tree<T>::iterator dfsIt, const std::vector<T> bfs){
+
+template<class T>
+std::vector<T> Tree<T>::depthFirstSearch(const T &headVertex){
+    std::vector<T> result;
+    std::map<T, bool> visited; //0 - white; 1 - grey; 2 - black
     
-
-
-
-
-
-
-
-
-
-
-
-
+    typedef typename std::map<T, std::vector<T> >::const_iterator TreeIterator;
+    for(TreeIterator it = tree.begin(); it != tree.end(); ++it){
+        visited[it->first] = false;
+    }
+    visited[headVertex] = true;
+    
+    std::stack<T> lifo;
+    lifo.push(headVertex);
+    
+    while(lifo.size() != 0){
+        T curVertex = lifo.top();
+        bool isUnvisitedChildExist = false;
+        if(tree.find(curVertex) != tree.end()){
+            typedef typename std::vector<T>::const_iterator Iterator;
+            const std::vector<T> childNodes = tree[curVertex];
+            for(Iterator it = childNodes.begin(); it != childNodes.end(); ++it){
+                if(!visited[*it]){
+                    visited[*it] = true;
+                    lifo.push(*it);
+                    isUnvisitedChildExist = true;
+                }
+            }
+        }
+        if(!isUnvisitedChildExist){
+            lifo.pop();
+            result.push_back(curVertex);
+        }
+    }
+    reverse(result.begin(), result.end());
+    return result;
+}    
 
